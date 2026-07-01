@@ -1,5 +1,5 @@
-import Navbar from '../components/landingpage/Navbar'
-import Hero from '../components/landingpage/Hero'
+import Navbar from '../../components/landingpage/Navbar'
+import Hero from '../../components/landingpage/Hero'
 function Home() {
     return (
 
