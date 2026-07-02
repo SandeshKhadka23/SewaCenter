@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Home, ClipboardList, Wrench, Menu, X } from 'lucide-react';
+import { Search, Home, ClipboardList, Wrench, Menu, X, Users } from 'lucide-react';
 import { useState } from 'react';
 import Logo from '../../assets/images/sewacenterlogo.png';
 
@@ -7,6 +7,7 @@ const navLinks = [
     { to: '/dashboard', label: 'Home', icon: Home },
     { to: '/dashboard/search', label: 'Search', icon: Search },
     { to: '/dashboard/categories', label: 'Categories', icon: Wrench },
+    { to: '/dashboard/providers', label: 'Providers', icon: Users },
     { to: '/dashboard/bookings', label: 'My Bookings', icon: ClipboardList },
 ];
 
