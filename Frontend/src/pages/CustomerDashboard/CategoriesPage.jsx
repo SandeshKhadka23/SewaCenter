@@ -25,7 +25,7 @@ export default function CategoriesPage() {
                     return (
                         <Link
                             key={cat.id}
-                            to={`/categories/${cat.id}`}
+                            to={`/dashboard/categories/${cat.id}`}
                             className="group bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all duration-200"
                         >
                             <div className="relative h-40 overflow-hidden">

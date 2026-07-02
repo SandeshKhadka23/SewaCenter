@@ -108,7 +108,7 @@ export default function HomePage() {
                     {categories.slice(0, 8).map((cat) => (
                         <Link
                             key={cat.id}
-                            to={`/categories/${cat.id}`}
+                            to={`/dashboard/categories/${cat.id}`}
                             className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-md transition-all p-5"
                         >
                             <img src={cat.image} alt={cat.name} className="w-10 h-10 rounded-lg object-cover mb-3" />
