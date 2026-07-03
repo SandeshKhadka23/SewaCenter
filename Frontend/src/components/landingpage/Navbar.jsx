@@ -6,11 +6,11 @@ function Navbar() {
     const navigate = useNavigate();
 
     function handleBecomeProvider() {
-        console.log("become a provider clicked!");
+        navigate('/register-provider');
     }
 
     function handleLogin() {
-        console.log("login clicked!");
+        navigate("/login");
     }
 
     function handleSignup() {
