@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import { MapPin } from 'lucide-react';
+import { ChevronsDown } from "lucide-react";
 import Button from './Button';
 import Logo from '../../assets/images/sewacenterlogo.png';
 
@@ -32,9 +34,10 @@ function Navbar() {
                 hover:border-blue-500
                 cursor-pointer
             ">
-                <span>📍</span>
+                <MapPin size={18} className="text-slate-500" />
                 <span>Kathmandu</span>
-                <span>🔻</span>
+                <ChevronsDown size={18} className="text-slate-500" />
+
             </div>
 
             <div className='flex gap-2'>

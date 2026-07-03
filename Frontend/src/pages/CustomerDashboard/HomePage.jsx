@@ -26,6 +26,7 @@ export default function HomePage() {
 
     return (
         <div>
+            {/* herosection */}
             <section className="relative bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800 text-white overflow-hidden">
                 <div className="absolute inset-0">
                     <div className="absolute -top-16 -right-16 w-64 h-64 bg-blue-500 rounded-full opacity-20 blur-3xl" />
@@ -79,7 +80,7 @@ export default function HomePage() {
                     </div>
                 </div>
             </section>
-
+            {/* trust section */}
             <section className="border-b border-slate-200 bg-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
@@ -92,7 +93,7 @@ export default function HomePage() {
                     </div>
                 </div>
             </section>
-
+            {/* categories section */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
                 <div className="flex items-center justify-between mb-8">
                     <div>
@@ -118,7 +119,7 @@ export default function HomePage() {
                     ))}
                 </div>
             </section>
-
+            {/* top rated providers section */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
                 <div className="flex items-center justify-between mb-8">
                     <div>
@@ -135,7 +136,7 @@ export default function HomePage() {
                     ))}
                 </div>
             </section>
-
+            {/* trust section */}
             <section className="bg-slate-900 text-white py-14">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 text-center">
