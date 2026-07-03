@@ -16,6 +16,9 @@ import CategoryPage from "./pages/CustomerDashboard/CategoryPage";
 import ProviderProfilePage from "./pages/CustomerDashboard/ProviderProfilePage";
 import BookingFormPage from "./pages/CustomerDashboard/BookingFormPage";
 import BookingHistoryPage from "./pages/CustomerDashboard/BookingHistoryPage";
+import ProvidersPage from "./pages/CustomerDashboard/ProvidersPage";
+import BecomeProviderPage from "./pages/CustomerDashboard/BecomeProviderpage";
+
 
 function App() {
   return (
@@ -26,12 +29,18 @@ function App() {
       {/* Landing Page */}
       <Route path="/" element={<Home />} />
 
+      {/* Provider Pages */}
+      <Route path="/providers" element={<ProvidersPage />} />
+      <Route path="/providers/:providerId" element={<ProviderProfilePage />} />
+      <Route path="/become-provider" element={<BecomeProviderPage />} />
+
       {/* Customer Dashboard */}
       <Route path="/dashboard" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="categories/:categoryId" element={<CategoryPage />} />
+        <Route path="providers" element={<ProvidersPage />} />
         <Route path="providers/:providerId" element={<ProviderProfilePage />} />
         <Route path="book/:providerId" element={<BookingFormPage />} />
         <Route path="bookings" element={<BookingHistoryPage />} />
