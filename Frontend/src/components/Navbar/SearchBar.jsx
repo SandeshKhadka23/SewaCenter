@@ -1,6 +1,8 @@
 import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function SearchBar() {
+    const navigate = useNavigate();
     return (
         <div className="flex items-center bg-white border border-slate-200 rounded-full overflow-hidden shadow-sm w-full max-w-xl">
 
@@ -14,7 +16,7 @@ function SearchBar() {
                 />
             </div>
 
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 font-medium">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 font-medium" onClick={() => navigate('/search')}>
                 Search
             </button>
 

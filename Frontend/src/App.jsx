@@ -16,11 +16,11 @@ import ProviderProfilePage from "./pages/CustomerDashboard/ProviderProfilePage";
 import BookingFormPage from "./pages/CustomerDashboard/BookingFormPage";
 import BookingHistoryPage from "./pages/CustomerDashboard/BookingHistoryPage";
 import ProvidersPage from "./pages/CustomerDashboard/ProvidersPage";
-import BecomeProviderPage from "./pages/CustomerDashboard/BecomeProviderpage";
-import RegisterProvider from "./pages/CustomerDashboard/RegisterProvider";
-import LoginChoice from "./pages/CustomerDashboard/LoginChoice";
-import CustomerLogin from "./pages/CustomerDashboard/CustomerLogin";
-import ProviderLogin from "./pages/CustomerDashboard/ProviderLogin";
+import BecomeProviderPage from "./pages/authentication/BecomeProviderpage";
+// import RegisterProvider from "./pages/CustomerDashboard/RegisterProvider";
+// import LoginChoice from "./pages/CustomerDashboard/LoginChoice";
+// import CustomerLogin from "./pages/CustomerDashboard/CustomerLogin";
+// import ProviderLogin from "./pages/CustomerDashboard/ProviderLogin";
 // ProviderDashBoard
 import ProviderDashboard from "./pages/ProviderDashboard/ProviderDashboard";
 import ManageBookings from "./pages/ProviderDashboard/ManageBookings";
@@ -35,6 +35,7 @@ function App() {
       {/* Authentication */}
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/becomeprovider" element={<BecomeProviderPage />} />
       {/* Landing Page
       <Route path="/" element={<Home />} /> */}
 
@@ -43,10 +44,10 @@ function App() {
       <Route path="/providers/:providerId" element={<ProviderProfilePage />} />
       <Route path="/become-provider" element={<BecomeProviderPage />} />
       {/* Register Provider */}
-      <Route path="/register-provider" element={<RegisterProvider />} />
+      {/* <Route path="/register-provider" element={<RegisterProvider />} />
       <Route path="/login" element={<LoginChoice />} />
       <Route path="/customer-login" element={<CustomerLogin />} />
-      <Route path="/provider-login" element={<ProviderLogin />} />
+      <Route path="/provider-login" element={<ProviderLogin />} /> */}
 
       {/* Provider Dashboard */}
       <Route path="/provider-dashboard" element={<ProviderDashboard />} />

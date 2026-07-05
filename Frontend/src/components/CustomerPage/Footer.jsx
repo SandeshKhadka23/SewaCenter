@@ -1,4 +1,5 @@
-import LandingPageFooter from '../landingpage/Footer';
+import { Wrench, Phone, Mail, MapPin, Globe, Send, MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
     return (

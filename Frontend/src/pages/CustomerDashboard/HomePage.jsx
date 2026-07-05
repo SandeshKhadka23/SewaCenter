@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ShieldCheck, ChevronRight, Star, MapPin, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import { categories, providers } from '../../data/dummy';
 import ProviderCard from '../../components/CustomerPage/ProviderCard';
@@ -105,6 +105,71 @@ export default function HomePage() {
                                 <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
                             </div>
                         ))}
+                    </div>
+                </div>
+            </section>
+            {/* ── BECOME A PROVIDER ───────────────────────────────────────────── */}
+            <section className="py-20">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="bg-blue-600 rounded-3xl overflow-hidden shadow-2xl shadow-blue-200">
+                        <div className="grid lg:grid-cols-5">
+                            {/* Content */}
+                            <div className="lg:col-span-3 p-10 lg:p-14">
+                                <span className="inline-block bg-blue-500 text-blue-100 text-xs font-bold px-3 py-1.5 rounded-full mb-6 uppercase tracking-wider">
+                                    For Professionals
+                                </span>
+                                <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
+                                    Are You a Skilled<br />Professional?
+                                </h2>
+                                <p className="text-blue-100 text-base mb-8 leading-relaxed max-w-lg">
+                                    Start earning by connecting with customers near you. Join 1,500+
+                                    professionals already growing their business on SewaCenter.
+                                </p>
+
+                                <div className="grid sm:grid-cols-2 gap-3 mb-8">
+                                    {[
+                                        "Free to join — no upfront fees",
+                                        "Get discovered by thousands of customers",
+                                        "Easy booking management tools",
+                                        "Get paid quickly and securely",
+                                    ].map((item) => (
+                                        <div key={item} className="flex items-start gap-3">
+                                            <div className="w-5 h-5 bg-green-400 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <CheckCircle className="w-3 h-3 text-white" />
+                                            </div>
+                                            <span className="text-white text-sm leading-relaxed">{item}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => navigate('/becomeprovider')}
+                                    className="bg-white text-blue-600 font-bold px-8 py-3.5 rounded-xl hover:bg-blue-50 transition-colors shadow-lg shadow-blue-700/20 text-sm"
+                                >
+                                    Register as Provider →
+                                </button>
+                            </div>
+
+                            {/* Image */}
+                            <div className="hidden lg:block lg:col-span-2 relative min-h-80">
+                                <img
+                                    src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&h=500&fit=crop&auto=format"
+                                    alt="Skilled professional at work"
+                                    className="absolute inset-0 w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-transparent" />
+
+                                {/* Floating stat */}
+                                <div className="absolute bottom-8 right-6 bg-white rounded-2xl p-4 shadow-xl">
+                                    <p className="text-2xl font-bold text-slate-900">Rs. 45,000</p>
+                                    <p className="text-xs text-slate-500">avg. monthly earning</p>
+                                    <div className="mt-2 flex items-center gap-1">
+                                        <div className="h-1.5 flex-1 bg-green-400 rounded-full" />
+                                        <span className="text-xs text-green-600 font-semibold">+23% this month</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

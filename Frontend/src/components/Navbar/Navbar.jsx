@@ -6,10 +6,13 @@ import SearchBar from "./SearchBar";
 import LocationSelector from "./LocationSelector";
 import NotificationButton from "./NotificationButton";
 import ProfileMenu from "./ProfileMenu";
+import { useNavigate } from "react-router-dom";
 
 import Button from "../landingpage/Button";
 
 function Navbar({ loggedIn = false }) {
+    const navigate = useNavigate();
+
 
     return (
 
@@ -23,6 +26,7 @@ function Navbar({ loggedIn = false }) {
                     src={Logo}
                     alt="logo"
                     className="h-11 cursor-pointer"
+                    onClick={() => navigate('/')}
                 />
 
                 {/* Search */}
@@ -69,16 +73,19 @@ function Navbar({ loggedIn = false }) {
                         <Button
                             variant="outline"
                             text="Become Provider"
+                            onClick={() => navigate('/becomeprovider')}
                         />
 
                         <Button
                             variant="secondary"
                             text="Login"
+                            onClick={() => navigate('/login')}
                         />
 
                         <Button
                             variant="primary"
                             text="Signup"
+                            onClick={() => navigate('/signup')}
                         />
 
                     </div>
