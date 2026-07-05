@@ -24,7 +24,7 @@ export default function ProviderProfilePage() {
         return (
             <div className="max-w-7xl mx-auto px-4 py-20 text-center">
                 <h2 className="text-2xl font-bold text-slate-800 mb-3">Provider Not Found</h2>
-                <Link to="/dashboard/search" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors">
+                <Link to="/search" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors">
                     Browse Providers
                 </Link>
             </div>
@@ -39,11 +39,11 @@ export default function ProviderProfilePage() {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <nav className="flex items-center gap-1.5 text-sm text-slate-500 mb-6 flex-wrap">
-                <Link to="/dashboard" className="flex items-center gap-1 hover:text-blue-600"><HomeIcon className="w-3.5 h-3.5" /> Home</Link>
+                <Link to="/" className="flex items-center gap-1 hover:text-blue-600"><HomeIcon className="w-3.5 h-3.5" /> Home</Link>
                 <ChevronRight className="w-3.5 h-3.5" />
-                <Link to="/dashboard/categories" className="hover:text-blue-600">Categories</Link>
+                <Link to="/categories" className="hover:text-blue-600">Categories</Link>
                 <ChevronRight className="w-3.5 h-3.5" />
-                <Link to={`/dashboard/categories/${provider.categoryId}`} className="hover:text-blue-600">{provider.category}</Link>
+                <Link to={`/categories/${provider.categoryId}`} className="hover:text-blue-600">{provider.category}</Link>
                 <ChevronRight className="w-3.5 h-3.5" />
                 <span className="text-slate-700 font-medium truncate">{provider.name}</span>
             </nav>
@@ -203,7 +203,7 @@ export default function ProviderProfilePage() {
                             </div>
                         </div>
                         <button
-                            onClick={() => navigate(`/dashboard/book/${provider.id}`)}
+                            onClick={() => navigate(`/book/${provider.id}`)}
                             disabled={provider.availability === 'offline'}
                             className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
@@ -225,7 +225,7 @@ export default function ProviderProfilePage() {
                             <h3 className="font-semibold text-slate-800 mb-4">Similar Providers</h3>
                             <div className="space-y-4">
                                 {similarProviders.map((p) => (
-                                    <Link key={p.id} to={`/dashboard/providers/${p.id}`} className="flex items-center gap-3 group">
+                                    <Link key={p.id} to={`/providers/${p.id}`} className="flex items-center gap-3 group">
                                         <img src={p.avatar} alt={p.name} className="w-10 h-10 rounded-xl object-cover shrink-0" />
                                         <div className="min-w-0 flex-1">
                                             <div className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors truncate">{p.name}</div>

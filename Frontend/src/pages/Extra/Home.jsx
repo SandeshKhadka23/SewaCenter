@@ -1,6 +1,6 @@
-import Navbar from '../../components/landingpage/Navbar'
+import Navbar from '../../components/Navbar/Navbar'
 import Hero from '../../components/landingpage/Hero'
-import Trust from '../../components/landingpage/Trust'
+
 import Howitworks from '../../components/landingpage/Howitworks'
 
 function Home() {
@@ -9,7 +9,7 @@ function Home() {
         <>
             <Navbar />
             <Hero />
-            <Trust />
+
             <categories />
             <Howitworks />
             <whysewacenter />

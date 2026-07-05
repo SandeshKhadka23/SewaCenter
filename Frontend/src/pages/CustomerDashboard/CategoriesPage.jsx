@@ -25,7 +25,7 @@ export default function CategoriesPage() {
                     return (
                         <Link
                             key={cat.id}
-                            to={`/dashboard/categories/${cat.id}`}
+                            to={`/categories/${cat.id}`}
                             className="group bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all duration-200"
                         >
                             <div className="relative h-40 overflow-hidden">
@@ -66,7 +66,7 @@ export default function CategoriesPage() {
                 <h2 className="text-2xl font-bold mb-3">Can't find your service?</h2>
                 <p className="text-blue-100 mb-6">Tell us what you need and we'll connect you with the right provider.</p>
                 <Link
-                    to="/dashboard/search"
+                    to="/search"
                     className="inline-flex items-center gap-2 bg-white text-blue-700 font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors"
                 >
                     Search All Services <ChevronRight className="w-4 h-4" />

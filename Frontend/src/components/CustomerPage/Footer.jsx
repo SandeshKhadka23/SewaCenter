@@ -23,9 +23,9 @@ export default function Footer() {
                     <div>
                         <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wide">Services</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><Link to="/dashboard/categories" className="hover:text-blue-400 transition-colors">All Categories</Link></li>
-                            <li><Link to="/dashboard/search" className="hover:text-blue-400 transition-colors">Find Providers</Link></li>
-                            <li><Link to="/dashboard/bookings" className="hover:text-blue-400 transition-colors">My Bookings</Link></li>
+                            <li><Link to="/categories" className="hover:text-blue-400 transition-colors">All Categories</Link></li>
+                            <li><Link to="/search" className="hover:text-blue-400 transition-colors">Find Providers</Link></li>
+                            <li><Link to="/bookings" className="hover:text-blue-400 transition-colors">My Bookings</Link></li>
                         </ul>
                     </div>
 

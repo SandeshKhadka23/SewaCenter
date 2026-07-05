@@ -1,12 +1,11 @@
 import { Routes, Route } from "react-router-dom";
 
+//Protected route
+import ProtectedRoute from "./pages/authentication/ProtectedRoute";
+
 // Authentication
 import Signup from "./pages/authentication/Signup";
 import Login from "./pages/authentication/LoginPage";
-
-// Landing Page
-import Home from "./pages/LandingPage/Home";
-
 // Customer Dashboard
 import Layout from "./components/CustomerPage/Layout";
 import HomePage from "./pages/CustomerDashboard/HomePage";
@@ -26,8 +25,8 @@ function App() {
       {/* Authentication */}
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
-      {/* Landing Page */}
-      <Route path="/" element={<Home />} />
+      {/* Landing Page
+      <Route path="/" element={<Home />} /> */}
 
       {/* Provider Pages */}
       <Route path="/providers" element={<ProvidersPage />} />
@@ -35,15 +34,23 @@ function App() {
       <Route path="/become-provider" element={<BecomeProviderPage />} />
 
       {/* Customer Dashboard */}
-      <Route path="/dashboard" element={<Layout />}>
+      <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="categories/:categoryId" element={<CategoryPage />} />
         <Route path="providers" element={<ProvidersPage />} />
         <Route path="providers/:providerId" element={<ProviderProfilePage />} />
-        <Route path="book/:providerId" element={<BookingFormPage />} />
-        <Route path="bookings" element={<BookingHistoryPage />} />
+        <Route path="book/:providerId" element={
+          <ProtectedRoute>
+            <BookingFormPage />
+          </ProtectedRoute>
+        } />
+        <Route path="bookings" element={
+          <ProtectedRoute>
+            <BookingHistoryPage />
+          </ProtectedRoute>
+        } />
       </Route>
     </Routes>
   );

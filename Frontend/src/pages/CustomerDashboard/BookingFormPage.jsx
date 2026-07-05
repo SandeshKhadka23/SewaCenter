@@ -40,7 +40,7 @@ export default function BookingFormPage() {
         return (
             <div className="max-w-7xl mx-auto px-4 py-20 text-center">
                 <h2 className="text-2xl font-bold text-slate-800 mb-3">Provider Not Found</h2>
-                <Link to="/dashboard/search" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm">Browse Providers</Link>
+                <Link to="/search" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm">Browse Providers</Link>
             </div>
         );
     }
@@ -92,10 +92,10 @@ export default function BookingFormPage() {
                     </ul>
                 </div>
                 <div className="flex gap-3 justify-center">
-                    <button onClick={() => navigate('/dashboard/bookings')} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors">
+                    <button onClick={() => navigate('/bookings')} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors">
                         View Bookings
                     </button>
-                    <button onClick={() => navigate('/dashboard')} className="px-5 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-medium text-sm hover:border-slate-400 transition-colors">
+                    <button onClick={() => navigate('/')} className="px-5 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-medium text-sm hover:border-slate-400 transition-colors">
                         Back to Home
                     </button>
                 </div>
@@ -106,9 +106,9 @@ export default function BookingFormPage() {
     return (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
             <nav className="flex items-center gap-1.5 text-sm text-slate-500 mb-6 flex-wrap">
-                <Link to="/dashboard" className="flex items-center gap-1 hover:text-blue-600"><HomeIcon className="w-3.5 h-3.5" /> Home</Link>
+                <Link to="/" className="flex items-center gap-1 hover:text-blue-600"><HomeIcon className="w-3.5 h-3.5" /> Home</Link>
                 <ChevronRight className="w-3.5 h-3.5" />
-                <Link to={`/dashboard/providers/${provider.id}`} className="hover:text-blue-600">{provider.name}</Link>
+                <Link to={`/providers/${provider.id}`} className="hover:text-blue-600">{provider.name}</Link>
                 <ChevronRight className="w-3.5 h-3.5" />
                 <span className="text-slate-700 font-medium">Book</span>
             </nav>

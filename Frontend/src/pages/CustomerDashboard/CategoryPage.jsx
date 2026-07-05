@@ -40,7 +40,7 @@ export default function CategoryPage() {
         return (
             <div className="max-w-7xl mx-auto px-4 py-20 text-center">
                 <h2 className="text-2xl font-bold text-slate-800 mb-3">Category Not Found</h2>
-                <Link to="/dashboard/categories" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors">
+                <Link to="/categories" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors">
                     Browse All Categories
                 </Link>
             </div>
@@ -50,11 +50,11 @@ export default function CategoryPage() {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <nav className="flex items-center gap-1.5 text-sm text-slate-500 mb-6 flex-wrap">
-                <Link to="/dashboard" className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+                <Link to="/" className="flex items-center gap-1 hover:text-blue-600 transition-colors">
                     <HomeIcon className="w-3.5 h-3.5" /> Home
                 </Link>
                 <ChevronRight className="w-3.5 h-3.5" />
-                <Link to="/dashboard/categories" className="hover:text-blue-600 transition-colors">Categories</Link>
+                <Link to="/categories" className="hover:text-blue-600 transition-colors">Categories</Link>
                 <ChevronRight className="w-3.5 h-3.5" />
                 <span className="text-slate-700 font-medium">{category.name}</span>
             </nav>
@@ -77,7 +77,7 @@ export default function CategoryPage() {
                 {categories.filter((c) => c.id !== categoryId).slice(0, 6).map((c) => (
                     <Link
                         key={c.id}
-                        to={`/dashboard/categories/${c.id}`}
+                        to={`/categories/${c.id}`}
                         className="px-4 py-2 rounded-full text-sm font-medium border bg-white border-slate-300 text-slate-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
                     >
                         {c.name}
@@ -93,8 +93,8 @@ export default function CategoryPage() {
                     <button
                         onClick={() => setShowFilters(!showFilters)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters || verifiedOnly || selectedAvailability
-                                ? 'border-blue-400 bg-blue-50 text-blue-600'
-                                : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
+                            ? 'border-blue-400 bg-blue-50 text-blue-600'
+                            : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
                             }`}
                     >
                         <SlidersHorizontal className="w-4 h-4" /> Filters

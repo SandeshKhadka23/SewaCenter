@@ -96,8 +96,8 @@ export default function BookingHistoryPage() {
                         {tabs.map((t) => (
                             <button key={t.value} onClick={() => setActiveTab(t.value)}
                                 className={`px-5 py-4 text-sm font-medium whitespace-nowrap transition-colors relative ${activeTab === t.value
-                                        ? 'text-blue-600 bg-blue-50/50'
-                                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                    ? 'text-blue-600 bg-blue-50/50'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                                     }`}
                             >
                                 {t.label}
