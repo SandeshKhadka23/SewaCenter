@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ChevronRight, MapPin, ShieldCheck, Star, TrendingUp } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { categories, providers } from '../../data/dummy';
 import ProviderCard from '../../components/CustomerPage/ProviderCard';
@@ -46,40 +46,42 @@ export default function HomePage() {
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">Browse Categories</h2>
-                        <p className="text-slate-500 mt-1">Find the service you need</p>
+                        <h2 className="text-2xl font-bold tracking-[-0.02em] text-slate-800 sm:text-3xl">Browse Categories</h2>
+                        <p className="mt-1 text-slate-500">Find the service you need</p>
                     </div>
                     <Link to="/categories" className="flex items-center gap-1 text-blue-600 font-medium text-sm hover:gap-2 transition-all">
                         View all <ChevronRight className="w-4 h-4" />
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
                     {categories.slice(0, 8).map((cat) => (
                         <Link
                             key={cat.id}
                             to={`/categories/${cat.id}`}
                             className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-md transition-all p-5"
                         >
-                            <img src={cat.image} alt={cat.name} className="w-10 h-10 rounded-lg object-cover mb-3" />
-                            <div className="font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">{cat.name}</div>
-                            <div className="text-xs text-slate-400 mt-0.5">{cat.providerCount} providers</div>
+                            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100">
+                                <img src={cat.image} alt={cat.name} className="h-8 w-8 rounded-lg object-cover" />
+                            </div>
+                            <div className="font-semibold text-slate-800 transition-colors group-hover:text-blue-600">{cat.name}</div>
+                            <div className="mt-0.5 text-xs text-slate-400">{cat.providerCount} providers</div>
                         </Link>
                     ))}
                 </div>
             </section>
-            {/* top rated providers section */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-                <div className="flex items-center justify-between mb-8">
+
+            <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+                <div className="mb-8 flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">Top Rated Providers</h2>
-                        <p className="text-slate-500 mt-1">Highly rated by our community</p>
+                        <h2 className="text-2xl font-bold tracking-[-0.02em] text-slate-800 sm:text-3xl">Top Rated Providers</h2>
+                        <p className="mt-1 text-slate-500">Highly rated by our community</p>
                     </div>
                     <Link to="/search" className="flex items-center gap-1 text-blue-600 font-medium text-sm hover:gap-2 transition-all">
                         See all <ChevronRight className="w-4 h-4" />
                     </Link>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                     {featured.map((p) => (
                         <ProviderCard key={p.id} provider={p} />
                     ))}

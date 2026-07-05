@@ -4,7 +4,7 @@ import Footer from './Footer';
 
 export default function Layout() {
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50">
+        <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,#f8fafc_0%,#f8fbff_100%)] text-slate-900">
             <Navbar />
             <main className="flex-1">
                 <Outlet />

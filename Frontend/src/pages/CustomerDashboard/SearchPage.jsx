@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 import { providers, categories } from '../../data/dummy';
@@ -15,10 +15,9 @@ const sortOptions = [
 
 export default function SearchPage() {
     const [searchParams, setSearchParams] = useSearchParams();
-    const initialQuery = searchParams.get('q') || '';
+    const query = searchParams.get('q') || '';
 
-    const [query, setQuery] = useState(initialQuery);
-    const [inputValue, setInputValue] = useState(initialQuery);
+    const [inputValue, setInputValue] = useState(query);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedAvailability, setSelectedAvailability] = useState('');
     const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -26,16 +25,10 @@ export default function SearchPage() {
     const [sortBy, setSortBy] = useState('match');
     const [showFilters, setShowFilters] = useState(false);
 
-    useEffect(() => {
-        const q = searchParams.get('q') || '';
-        setQuery(q);
-        setInputValue(q);
-    }, [searchParams]);
-
     const handleSearch = (e) => {
         e.preventDefault();
-        setQuery(inputValue.trim());
-        if (inputValue.trim()) setSearchParams({ q: inputValue.trim() });
+        const trimmedQuery = inputValue.trim();
+        if (trimmedQuery) setSearchParams({ q: trimmedQuery });
         else setSearchParams({});
     };
 
@@ -94,7 +87,7 @@ export default function SearchPage() {
                     {inputValue && (
                         <button
                             type="button"
-                            onClick={() => { setInputValue(''); setQuery(''); setSearchParams({}); }}
+                            onClick={() => { setInputValue(''); setSearchParams({}); }}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                         >
                             <X className="w-4 h-4" />
