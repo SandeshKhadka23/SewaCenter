@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import ProviderLayout from "./pages/ProviderDashboard/ProviderLayout";
 
 // Landing Page
 import Home from "./pages/LandingPage/Home";
@@ -24,6 +25,8 @@ import ManageBookings from "./pages/ProviderDashboard/ManageBookings";
 import EditProfile from "./pages/ProviderDashboard/EditProfile";
 import Availability from "./pages/ProviderDashboard/Availability";
 import Settings from "./pages/ProviderDashboard/Settings";
+import Earnings from "./pages/ProviderDashboard/Earnings";
+import Reviews from "./pages/ProviderDashboard/Reviews";
 
 
 function App() {
@@ -43,11 +46,23 @@ function App() {
       <Route path="/provider-login" element={<ProviderLogin />} />
        
 {/* Provider Dashboard */}
-<Route path="/provider-dashboard" element={<ProviderDashboard />} />
-<Route path="/manage-bookings" element={<ManageBookings />} />
-<Route path="/edit-profile" element={<EditProfile />} />
-<Route path="/availability" element={<Availability />} />
-<Route path="/settings" element={<Settings />} />
+<Route path="/" element={<ProviderLayout />}>
+
+  <Route path="provider-dashboard" element={<ProviderDashboard />} />
+
+  <Route path="manage-bookings" element={<ManageBookings />} />
+
+  <Route path="edit-profile" element={<EditProfile />} />
+
+  <Route path="availability" element={<Availability />} />
+
+  <Route path="earnings" element={<Earnings />} />
+
+  <Route path="reviews" element={<Reviews />} />
+
+  <Route path="settings" element={<Settings />} />
+
+</Route>
 
 
       {/* Customer Dashboard */}
