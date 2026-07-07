@@ -21,7 +21,7 @@ export default function ProviderDashboard() {
 
   return (
     <>
-      {/* Welcome Card */}
+      {/* Welcome git  Card */}
       <div className="bg-white rounded-2xl shadow-md p-6 mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold">
