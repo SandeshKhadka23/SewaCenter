@@ -42,11 +42,11 @@ export default function ProviderDashboard() {
             💬
           </button>
 
-          <img
+          {/* <img
             src={provider}
             alt="Provider"
             className="w-14 h-14 rounded-full border object-cover"
-          />
+          /> */}
         </div>
       </div>
 
@@ -165,7 +165,7 @@ export default function ProviderDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions
       <div className="mt-10">
         <h2 className="text-2xl font-bold mb-6">
           Quick Actions
@@ -249,8 +249,8 @@ export default function ProviderDashboard() {
               Set your working days and hours.
             </p>
           </Link>
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
     </>
   );
 }

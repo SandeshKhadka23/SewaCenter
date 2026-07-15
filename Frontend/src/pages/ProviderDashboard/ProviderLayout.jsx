@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import ProviderSidebar from "./ProviderSidebar";
 
-import Navbar from "../../components/CustomerPage/Navbar";
+// import Navbar from "../../components/CustomerPage/Navbar";
 import Footer from "../../components/CustomerPage/Footer";
 
 export default function ProviderLayout() {
@@ -15,7 +15,7 @@ export default function ProviderLayout() {
       <div className="ml-64 flex flex-col min-h-screen">
 
         {/* Header */}
-        <Navbar />
+        {/* <Navbar /> */}
 
         {/* Page Content */}
         <main className="flex-1 p-8">
