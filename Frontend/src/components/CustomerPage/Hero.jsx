@@ -1,4 +1,4 @@
-import Button from './Button';
+import Button from '../CustomerPage/Button';
 import worker from '../../assets/images/cropped-worker.png';
 import { useNavigate } from 'react-router-dom';
 

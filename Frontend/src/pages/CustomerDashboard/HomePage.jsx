@@ -3,8 +3,8 @@ import { ShieldCheck, ChevronRight, Star, MapPin, CheckCircle } from 'lucide-rea
 import { useState } from 'react';
 import { categories, providers } from '../../data/dummy';
 import ProviderCard from '../../components/CustomerPage/ProviderCard';
-import Hero from '../../components/landingpage/Hero';
-import Howitworks from '../../components/landingpage/Howitworks';
+import Hero from '../../components/CustomerPage/Hero';
+import Howitworks from '../../components/CustomerPage/Howitworks';
 
 const popularSearches = ['Plumber', 'Electrician', 'Home Cleaning', 'AC Repair', 'Maths Tutor'];
 

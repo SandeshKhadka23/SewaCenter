@@ -1,99 +1,124 @@
-import { Link, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  CalendarDays,
+  IndianRupee,
+  Star,
+  Clock3,
+  User,
+  Settings,
+  LogOut,
+} from "lucide-react";
+
+import { NavLink } from "react-router-dom";
 import logo from "../../assets/images/sewacenterlogo.png";
-import provider from "../../assets/images/provider.jpg";
+
+const menu = [
+  { title: "Dashboard", icon: LayoutDashboard, path: "/provider" },
+  { title: "Bookings", icon: CalendarDays, path: "/provider/manage-bookings" },
+  { title: "Earnings", icon: IndianRupee, path: "/provider/earnings" },
+  { title: "Reviews", icon: Star, path: "/provider/reviews" },
+  { title: "Availability", icon: Clock3, path: "/provider/availability" },
+  { title: "Profile", icon: User, path: "/provider/edit-profile" },
+  { title: "Settings", icon: Settings, path: "/provider/settings" },
+];
+
+function initials(name) {
+  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+}
 
 export default function ProviderSidebar() {
-  const location = useLocation();
-
-  const menuItems = [
-    { name: "Dashboard", path: "/provider-dashboard", icon: "📊" },
-    { name: "Manage Bookings", path: "/manage-bookings", icon: "📅" },
-    { name: "Availability", path: "/availability", icon: "🟢" },
-    { name: "Earnings", path: "/earnings", icon: "💰" },
-    { name: "Reviews", path: "/reviews", icon: "⭐" },
-    { name: "Edit Profile", path: "/edit-profile", icon: "👤" },
-    { name: "Settings", path: "/settings", icon: "⚙️" },
-  ];
-
   return (
-    <aside className="fixed left-0 top-0 w-64 h-screen bg-slate-900 text-white flex flex-col justify-between shadow-xl">
+    <aside
+      className="w-72 h-screen flex flex-col font-body"
+      style={{ background: "#FFFFFF", borderRight: "1px solid #E7E2D4" }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+        .font-display { font-family: 'Space Grotesk', sans-serif; }
+        .font-body { font-family: 'IBM Plex Sans', sans-serif; }
+      `}</style>
 
-      {/* Top Section */}
-      <div>
+      {/* Logo */}
+      <div className="px-7 py-7" style={{ borderBottom: "1px solid #EFEBDF" }}>
+        <div className="flex items-center gap-2">
+          <img src={logo} alt="sewacenterlogo" />
 
-        {/* Logo */}
-        <div className="bg-white flex justify-center items-center py-5 border-b border-slate-300">
-          <img
-            src={logo}
-            alt="SewaCenter"
-            className="w-48 object-contain"
-          />
+        </div>
+        <p className="text-xs uppercase tracking-widest mt-2 text-center" style={{ color: "#8A8A78" }}>
+          Provider desk
+        </p>
+      </div>
+
+      {/* Profile */}
+      <div className="px-7 py-6 flex items-center gap-4" style={{ borderBottom: "1px solid #EFEBDF" }}>
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center text-white font-display font-semibold text-lg shrink-0"
+          style={{ background: "#3B6E8F" }}
+        >
+          {initials("Sandesh Khadka")}
         </div>
 
-        {/* Profile */}
-        <div className="py-8 text-center border-b border-slate-700">
-
-          <img
-            src={provider}
-            alt="Provider"
-            className="w-24 h-24 rounded-full mx-auto border-4 border-blue-500 object-cover"
-          />
-
-          <h2 className="mt-4 text-2xl font-bold">
-            John Doe
+        <div className="min-w-0">
+          <h2 className="font-semibold truncate" style={{ color: "#20261F" }}>
+            Sandesh Khadka
           </h2>
-
-          <p className="text-slate-400">
+          <p className="text-sm" style={{ color: "#8A8A78" }}>
             Electrician
           </p>
-
-          <p className="text-yellow-400 mt-3 font-medium">
-            ⭐ 4.9 (128 Reviews)
-          </p>
-
+          <div className="flex items-center gap-1 mt-1">
+            <Star className="w-3.5 h-3.5" style={{ fill: "#E8A33D", color: "#E8A33D" }} />
+            <span className="text-sm font-medium" style={{ color: "#20261F" }}>
+              4.9
+            </span>
+          </div>
         </div>
-
-        {/* Menu */}
-        <nav className="px-4 py-5 space-y-2">
-
-          {menuItems.map((item) => {
-
-            const active = location.pathname === item.path;
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                  active
-                    ? "bg-green-600 text-white shadow-lg"
-                    : "hover:bg-slate-800 text-slate-200"
-                }`}
-              >
-                <span className="text-lg">{item.icon}</span>
-
-                <span className="font-medium">
-                  {item.name}
-                </span>
-
-              </Link>
-            );
-
-          })}
-
-        </nav>
-
       </div>
 
-      {/* Bottom */}
-      <div className="p-5 border-t border-slate-700">
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-5 space-y-1 overflow-y-auto">
+        {menu.map((item) => {
+          const Icon = item.icon;
 
-        <button className="w-full bg-red-600 hover:bg-red-700 transition py-3 rounded-xl font-semibold">
-          Logout
+          return (
+            <NavLink
+              key={item.title}
+              to={item.path}
+              className={({ isActive }) =>
+                `group flex items-center gap-3 pl-4 pr-4 py-3 rounded-lg font-medium text-sm transition-colors relative`
+              }
+              style={({ isActive }) => ({
+                color: isActive ? "#20261F" : "#6B6B63",
+                background: isActive ? "#F1EEE3" : "transparent",
+              })}
+            >
+              {({ isActive }) => (
+                <>
+                  <span
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-full transition-all"
+                    style={{
+                      height: isActive ? "60%" : "0%",
+                      background: "#E8A33D",
+                    }}
+                  />
+                  <Icon size={19} />
+                  {item.title}
+                </>
+              )}
+            </NavLink>
+          );
+        })}
+      </nav>
+
+      {/* Logout */}
+      <div className="p-5" style={{ borderTop: "1px solid #EFEBDF" }}>
+        <button
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-lg transition-colors font-medium text-sm hover:bg-[#FBEEEC]"
+          style={{ color: "#B24C3C" }}
+        >
+          <LogOut size={18} />
+          Log out
         </button>
-
       </div>
-
     </aside>
   );
 }

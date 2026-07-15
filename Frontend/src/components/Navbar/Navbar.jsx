@@ -8,7 +8,7 @@ import NotificationButton from "./NotificationButton";
 import ProfileMenu from "./ProfileMenu";
 import { useNavigate } from "react-router-dom";
 
-import Button from "../landingpage/Button";
+import Button from "../CustomerPage/Button";
 
 function Navbar({ loggedIn = false }) {
     const navigate = useNavigate();
