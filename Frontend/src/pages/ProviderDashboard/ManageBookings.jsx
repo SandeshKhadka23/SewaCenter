@@ -1,100 +1,101 @@
-import { useState } from "react";
-
 export default function ManageBookings() {
-  const [bookings, setBookings] = useState([
+  const bookings = [
     {
       id: 1,
       customer: "Ram Sharma",
       service: "Plumbing",
-      date: "2026-07-10",
+      date: "May 20, 2025",
+      time: "10:00 AM",
       status: "Pending",
     },
     {
       id: 2,
       customer: "Sita Karki",
       service: "Electrician",
-      date: "2026-07-12",
-      status: "Accepted",
+      date: "May 20, 2025",
+      time: "2:00 PM",
+      status: "Confirmed",
     },
-  ]);
-
-  const updateStatus = (id, status) => {
-    setBookings(
-      bookings.map((booking) =>
-        booking.id === id
-          ? { ...booking, status }
-          : booking
-      )
-    );
-  };
+    {
+      id: 3,
+      customer: "Hari KC",
+      service: "AC Repair",
+      date: "May 21, 2025",
+      time: "11:00 AM",
+      status: "Completed",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-100 p-8">
+    <div>
       <h1 className="text-3xl font-bold mb-8">
-        Booking Requests
+        Manage Bookings
       </h1>
 
-      {bookings.map((booking) => (
-        <div
-          key={booking.id}
-          className="bg-white rounded-xl shadow-md p-6 mb-5"
-        >
-          <h2 className="text-xl font-semibold">
-            {booking.customer}
-          </h2>
+      <div className="bg-white rounded-2xl shadow overflow-hidden">
 
-          <p>Service: {booking.service}</p>
+        <table className="w-full">
 
-          <p>Date: {booking.date}</p>
+          <thead className="bg-slate-100">
 
-          <p className="mb-4">
-            Status:
-            <span className="font-bold ml-2">
-              {booking.status}
-            </span>
-          </p>
+            <tr>
+              <th className="text-left px-6 py-4">Customer</th>
+              <th className="text-left px-6 py-4">Service</th>
+              <th className="text-left px-6 py-4">Date</th>
+              <th className="text-left px-6 py-4">Time</th>
+              <th className="text-left px-6 py-4">Status</th>
+              <th className="text-left px-6 py-4">Action</th>
+            </tr>
 
-          {booking.status === "Pending" && (
-            <div className="flex gap-4">
-              <button
-                onClick={() => updateStatus(booking.id, "Accepted")}
-                className="bg-green-600 text-white px-5 py-2 rounded-lg"
+          </thead>
+
+          <tbody>
+
+            {bookings.map((booking) => (
+              <tr
+                key={booking.id}
+                className="border-t hover:bg-slate-50"
               >
-                Accept
-              </button>
+                <td className="px-6 py-4">
+                  {booking.customer}
+                </td>
 
-              <button
-                onClick={() => updateStatus(booking.id, "Rejected")}
-                className="bg-red-600 text-white px-5 py-2 rounded-lg"
-              >
-                Reject
-              </button>
-            </div>
-          )}
+                <td className="px-6 py-4">
+                  {booking.service}
+                </td>
 
-          {booking.status === "Accepted" && (
-            <div className="flex gap-4">
-              <button
-                onClick={() => updateStatus(booking.id, "In Progress")}
-                className="bg-blue-600 text-white px-5 py-2 rounded-lg"
-              >
-                Start Job
-              </button>
-            </div>
-          )}
+                <td className="px-6 py-4">
+                  {booking.date}
+                </td>
 
-          {booking.status === "In Progress" && (
-            <div className="flex gap-4">
-              <button
-                onClick={() => updateStatus(booking.id, "Completed")}
-                className="bg-purple-600 text-white px-5 py-2 rounded-lg"
-              >
-                Mark Complete
-              </button>
-            </div>
-          )}
-        </div>
-      ))}
+                <td className="px-6 py-4">
+                  {booking.time}
+                </td>
+
+                <td className="px-6 py-4">
+                  <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm">
+                    {booking.status}
+                  </span>
+                </td>
+
+                <td className="px-6 py-4 flex gap-2">
+                  <button className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                    Accept
+                  </button>
+
+                  <button className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
+                    Reject
+                  </button>
+                </td>
+
+              </tr>
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </div>
     </div>
   );
 }
