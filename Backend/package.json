@@ -21,16 +21,24 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js"
   },
   "dependencies": {
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "5.19.1",
     "bcrypt": "^6.0.0",
     "colors": "^1.4.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "prisma": "^7.8.0"
+    "prisma": "5.19.1"
+  },
+  "allowScripts": {
+    "@prisma/client@5.19.1": true,
+    "@prisma/engines@5.19.1": true,
+    "bcrypt@6.0.0": true,
+    "prisma@5.19.1": true
   }
 }

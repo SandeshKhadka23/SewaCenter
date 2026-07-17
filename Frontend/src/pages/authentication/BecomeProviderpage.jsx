@@ -75,7 +75,25 @@ export default function BecomeProviderPage() {
         setError('');
 
         try {
-            await new Promise((resolve) => setTimeout(resolve, 600));
+            const res = await fetch('http://localhost:4000/api/providers/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    phone: form.phone,
+                    location: form.location,
+                    category: form.category,
+                    skills: form.skills,
+                    experience: form.experience,
+                    bio: form.bio,
+                    profileImageUrl: form.profileImageUrl,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setError(data.error || 'Failed to submit application. Please try again.');
+                return;
+            }
             setSubmitted(true);
         } catch (err) {
             console.error('Submit error:', err);
@@ -138,10 +156,10 @@ export default function BecomeProviderPage() {
                                 <div className="flex flex-col items-center">
                                     <div
                                         className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-colors ${isActive
-                                                ? 'bg-blue-600 text-white'
-                                                : isCompleted
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-slate-200 text-slate-500'
+                                            ? 'bg-blue-600 text-white'
+                                            : isCompleted
+                                                ? 'bg-green-500 text-white'
+                                                : 'bg-slate-200 text-slate-500'
                                             }`}
                                     >
                                         {isCompleted ? <CheckCircle className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
@@ -261,8 +279,8 @@ export default function BecomeProviderPage() {
                                             type="button"
                                             onClick={() => updateForm('category', cat.name)}
                                             className={`p-4 rounded-xl border-2 text-left transition-all ${form.category === cat.name
-                                                    ? 'border-blue-500 bg-blue-50'
-                                                    : 'border-slate-200 hover:border-slate-300'
+                                                ? 'border-blue-500 bg-blue-50'
+                                                : 'border-slate-200 hover:border-slate-300'
                                                 }`}
                                         >
                                             <img src={cat.image} alt={cat.name} className="w-10 h-10 rounded-lg object-cover mb-2" />

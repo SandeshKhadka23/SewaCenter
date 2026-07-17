@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 import Logo from "../../assets/images/sewacenterlogo.png";
 
@@ -10,8 +11,9 @@ import { useNavigate } from "react-router-dom";
 
 import Button from "../CustomerPage/Button";
 
-function Navbar({ loggedIn = false }) {
+function Navbar() {
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
 
 
     return (
@@ -41,7 +43,7 @@ function Navbar({ loggedIn = false }) {
 
                 {/* Right Side */}
 
-                {loggedIn ? (
+                {user ? (
 
                     <div className="flex items-center gap-3">
 
