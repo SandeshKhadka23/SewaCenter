@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { providerApi } from '../../lib/api';
 import {
     User, Mail, Phone, MapPin, FileText, Upload, CheckCircle,
     ChevronRight, ChevronLeft, Send, Award, Briefcase, Star, AlertCircle
@@ -75,25 +76,18 @@ export default function BecomeProviderPage() {
         setError('');
 
         try {
-            const res = await fetch('http://localhost:4000/api/providers/apply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    phone: form.phone,
-                    location: form.location,
-                    category: form.category,
-                    skills: form.skills,
-                    experience: form.experience,
-                    bio: form.bio,
-                    profileImageUrl: form.profileImageUrl,
-                }),
+            await providerApi.apply({
+                name: form.name.trim(),
+                email: form.email.trim(),
+                phone: form.phone.trim(),
+                location: form.location.trim(),
+                category: form.category,
+                skills: form.skills,
+                experience: form.experience,
+                bio: form.bio,
+                profileImageUrl: form.profileImageUrl,
             });
-            const data = await res.json();
-            if (!res.ok) {
-                setError(data.error || 'Failed to submit application. Please try again.');
-                return;
-            }
+
             setSubmitted(true);
         } catch (err) {
             console.error('Submit error:', err);
