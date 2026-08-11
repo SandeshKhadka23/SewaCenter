@@ -20,15 +20,63 @@ const aiRoutes = require("./routes/aiRoutes");
 
 const app = express();
 
+/* =======================
+        CORS
+======================= */
+
+// Allowed frontend origins
+const allowedOrigins = [
+    "https://sewa-center.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+];
+
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL || "http://localhost:5173",
+        origin: (origin, callback) => {
+            // Allow requests without an origin
+            // such as Postman, curl, or server-to-server requests
+            if (!origin) {
+                return callback(null, true);
+            }
+
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(new Error("Not allowed by CORS"));
+        },
+
         credentials: true,
+
+        methods: [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "OPTIONS",
+        ],
+
+        allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+        ],
     })
 );
 
+/* =======================
+      Middleware
+======================= */
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(
+    express.urlencoded({
+        extended: true,
+    })
+);
+
 app.use(cookieParser());
 
 /* =======================
@@ -62,18 +110,18 @@ app.use("/api/provider-services", providerServicesRoutes);
 app.use("/api/ai", aiRoutes);
 
 /* =======================
-      Health Check
+       Health Check
 ======================= */
 
 app.get("/api/health", (req, res) => {
-    res.json({
+    res.status(200).json({
         success: true,
         message: "Server is running successfully.",
     });
 });
 
 /* =======================
-      404 Handler
+        404 Handler
 ======================= */
 
 app.use((req, res) => {
@@ -84,11 +132,11 @@ app.use((req, res) => {
 });
 
 /* =======================
-   Global Error Handler
+     Global Error Handler
 ======================= */
 
 app.use((err, req, res, next) => {
-    console.error(err);
+    console.error("❌ Server Error:", err);
 
     res.status(err.status || 500).json({
         success: false,
@@ -102,6 +150,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server running on port ${ PORT } `);
 });
