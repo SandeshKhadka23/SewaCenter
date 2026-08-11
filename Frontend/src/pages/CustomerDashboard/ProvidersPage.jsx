@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Users, Star, MapPin, Award, Search, ChevronRight } from 'lucide-react';
-import { providers } from '../../data/dummy';
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Users, Star, MapPin, Award, Search, ChevronRight, Wrench, Sparkles } from 'lucide-react';
+import { providersApi, catalogServicesApi } from '../../services/api';
 
 const availabilityConfig = {
     available: { label: 'Available', cls: 'bg-green-100 text-green-700' },
@@ -13,8 +13,40 @@ export default function ProvidersPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [sortBy, setSortBy] = useState('rating');
+    const [allProviders, setAllProviders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [catalogService, setCatalogService] = useState(null);
 
-    const allProviders = providers;
+    // Read catalogServiceId from URL
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const catalogServiceId = searchParams.get('catalogServiceId');
+
+    // Fetch the catalog service details to show context
+    useEffect(() => {
+        if (catalogServiceId) {
+            catalogServicesApi.getById(catalogServiceId)
+                .then(setCatalogService)
+                .catch(() => setCatalogService(null));
+        } else {
+            setCatalogService(null);
+        }
+    }, [catalogServiceId]);
+
+    useEffect(() => {
+        const loadProviders = async () => {
+            try {
+                // If catalogServiceId exists, fetch specific providers, otherwise all
+                const data = await providersApi.getAll(catalogServiceId ? { catalogServiceId } : {});
+                setAllProviders(data || []);
+            } catch (error) {
+                console.error("Failed to fetch providers", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadProviders();
+    }, [catalogServiceId]);
 
     // Filter logic
     let filtered = [...allProviders];
@@ -49,29 +81,83 @@ export default function ProvidersPage() {
             break;
     }
 
-    const categories = [...new Set(providers.map((p) => p.category))];
+    const categories = [...new Set(allProviders.map((p) => p.category))];
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
             {/* Hero Section */}
-            <section className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 text-white py-14 px-4">
-                <div className="max-w-7xl mx-auto text-center">
-                    <div className="inline-flex items-center gap-2 bg-blue-500/30 text-blue-100 rounded-full px-4 py-1.5 text-sm font-medium mb-4">
-                        <Users className="w-4 h-4" /> {allProviders.length} Providers Available
+            {catalogService ? (
+                <section className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800 text-white py-10 px-4">
+                    <div className="max-w-7xl mx-auto">
+                        <nav className="flex items-center gap-1.5 text-sm text-slate-400 mb-4">
+                            <Link to="/categories" className="hover:text-white transition-colors">Categories</Link>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                            <Link to={`/categories/${catalogService.category?.slug}`} className="hover:text-white transition-colors capitalize">
+                                {catalogService.category?.name}
+                            </Link>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                            <span className="text-white font-medium">{catalogService.name}</span>
+                        </nav>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                                        {catalogService.serviceType === 'INSPECTION_BASED'
+                                            ? <Wrench className="w-5 h-5 text-amber-400" />
+                                            : <Sparkles className="w-5 h-5 text-emerald-400" />}
+                                    </div>
+                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                        catalogService.serviceType === 'INSPECTION_BASED'
+                                            ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
+                                            : 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/30'
+                                    }`}>
+                                        {catalogService.serviceType === 'INSPECTION_BASED' ? 'Inspection-Based' : 'Fixed Price'}
+                                    </span>
+                                </div>
+                                <h1 className="text-3xl sm:text-4xl font-bold mb-1">Providers for: {catalogService.name}</h1>
+                                {catalogService.description && (
+                                    <p className="text-slate-300 text-sm max-w-2xl">{catalogService.description}</p>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-3 bg-white/10 rounded-2xl px-5 py-3 text-center shrink-0">
+                                <Users className="w-5 h-5 text-blue-300" />
+                                <div>
+                                    <p className="text-2xl font-bold">{allProviders.length}</p>
+                                    <p className="text-xs text-slate-400">Available</p>
+                                </div>
+                            </div>
+                        </div>
+                        {/* AI nudge for inspection-based */}
+                        {catalogService.serviceType === 'INSPECTION_BASED' && (
+                            <div className="mt-5 flex items-center gap-3 bg-blue-600/30 border border-blue-500/40 rounded-xl px-4 py-3 text-sm text-blue-200">
+                                <Sparkles className="w-4 h-4 shrink-0 text-blue-300" />
+                                <span>Can't find what you need, or want AI to match the best expert for your issue?{' '}
+                                    <Link to="/ai-match" className="text-white font-semibold underline underline-offset-2 hover:text-blue-100">Try Sewa AI →</Link>
+                                </span>
+                            </div>
+                        )}
                     </div>
-                    <h1 className="text-4xl sm:text-5xl font-bold mb-4">Our Service Providers</h1>
-                    <p className="text-blue-100 text-lg max-w-2xl mx-auto mb-8">
-                        Browse trusted professionals ready to help you with plumbing, electrical, cleaning, tutoring, and more.
-                    </p>
-                    <Link
-                        to="/become-provider"
-                        className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold px-6 py-3 rounded-xl transition-colors shadow-lg"
-                    >
-                        <Award className="w-5 h-5" />
-                        Become a Provider
-                    </Link>
-                </div>
-            </section>
+                </section>
+            ) : (
+                <section className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 text-white py-14 px-4">
+                    <div className="max-w-7xl mx-auto text-center">
+                        <div className="inline-flex items-center gap-2 bg-blue-500/30 text-blue-100 rounded-full px-4 py-1.5 text-sm font-medium mb-4">
+                            <Users className="w-4 h-4" /> {allProviders.length} Providers Available
+                        </div>
+                        <h1 className="text-4xl sm:text-5xl font-bold mb-4">Our Service Providers</h1>
+                        <p className="text-blue-100 text-lg max-w-2xl mx-auto mb-8">
+                            Browse trusted professionals ready to help you with plumbing, electrical, cleaning, and more.
+                        </p>
+                        <Link
+                            to="/become-provider"
+                            className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold px-6 py-3 rounded-xl transition-colors shadow-lg"
+                        >
+                            <Award className="w-5 h-5" />
+                            Become a Provider
+                        </Link>
+                    </div>
+                </section>
+            )}
 
             {/* Filters */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -112,7 +198,11 @@ export default function ProvidersPage() {
 
             {/* Providers Grid */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-                {filtered.length > 0 ? (
+                {loading ? (
+                    <div className="flex justify-center py-20">
+                        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                ) : filtered.length > 0 ? (
                     <>
                         <p className="text-slate-500 mb-6">{filtered.length} provider{filtered.length !== 1 ? 's' : ''} found</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -136,9 +226,13 @@ export default function ProvidersPage() {
 function ProviderProfileCard({ provider }) {
     const avail = availabilityConfig[provider.availability] || availabilityConfig.available;
 
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const catalogServiceId = searchParams.get('catalogServiceId');
+
     return (
         <Link
-            to={`/providers/${provider.id}`}
+            to={`/providers/${provider.id}${catalogServiceId ? `?catalogServiceId=${catalogServiceId}` : ''}`}
             className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all duration-200"
         >
             <div className="relative">

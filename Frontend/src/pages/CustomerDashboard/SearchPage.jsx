@@ -1,8 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
-import { providers, categories } from '../../data/dummy';
+import { Search, SlidersHorizontal, X, ChevronDown, MapPin } from 'lucide-react';
+import { categories } from '../../data/categories';
+import { providersApi } from '../../services/api';
 import ProviderCard from '../../components/CustomerPage/ProviderCard';
+import { useLocation, NEPAL_LOCATIONS } from '../../context/LocationContext';
 
 const sortOptions = [
     { label: 'Best Match', value: 'match' },
@@ -16,24 +18,60 @@ const sortOptions = [
 export default function SearchPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
+    const locationParam = searchParams.get('location') || '';
+    const categoryParam = searchParams.get('category') || '';
+
+    const { location: ctxLocation, setLocation: setCtxLocation } = useLocation();
 
     const [inputValue, setInputValue] = useState(query);
-    const [selectedCategory, setSelectedCategory] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState(categoryParam);
     const [selectedAvailability, setSelectedAvailability] = useState('');
     const [verifiedOnly, setVerifiedOnly] = useState(false);
     const [minRating, setMinRating] = useState(0);
     const [sortBy, setSortBy] = useState('match');
     const [showFilters, setShowFilters] = useState(false);
+    const [allProviders, setAllProviders] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Sync category param → state when URL changes (e.g. navigating from a category card)
+    useEffect(() => {
+        setSelectedCategory(categoryParam);
+        if (categoryParam) setShowFilters(false); // pills already visible, no need to open filter panel
+    }, [categoryParam]);
+
+    // Sync location param to context
+    useEffect(() => {
+        if (locationParam) setCtxLocation(locationParam);
+    }, [locationParam]);
+
+    useEffect(() => {
+        const loadProviders = async () => {
+            try {
+                const data = await providersApi.getAll();
+                setAllProviders(data || []);
+            } catch (error) {
+                console.error("Failed to load providers:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadProviders();
+    }, []);
 
     const handleSearch = (e) => {
         e.preventDefault();
         const trimmedQuery = inputValue.trim();
-        if (trimmedQuery) setSearchParams({ q: trimmedQuery });
-        else setSearchParams({});
+        const params = {};
+        if (trimmedQuery) params.q = trimmedQuery;
+        const loc = ctxLocation && ctxLocation !== 'All Locations' ? ctxLocation : '';
+        if (loc) params.location = loc;
+        // preserve category if one is selected
+        if (selectedCategory) params.category = selectedCategory;
+        setSearchParams(params);
     };
 
     const results = useMemo(() => {
-        let list = [...providers];
+        let list = [...allProviders];
 
         if (query) {
             const q = query.toLowerCase();
@@ -42,9 +80,16 @@ export default function SearchPage() {
                     p.name.toLowerCase().includes(q) ||
                     p.category.toLowerCase().includes(q) ||
                     p.skills.some((s) => s.toLowerCase().includes(q)) ||
-                    p.location.toLowerCase().includes(q)
+                    p.location?.toLowerCase().includes(q)
             );
         }
+
+        // Filter by location from URL param
+        if (locationParam && locationParam !== 'All Locations') {
+            const loc = locationParam.toLowerCase();
+            list = list.filter((p) => p.location?.toLowerCase().includes(loc));
+        }
+
         if (selectedCategory) list = list.filter((p) => p.categoryId === selectedCategory);
         if (selectedAvailability) list = list.filter((p) => p.availability === selectedAvailability);
         if (verifiedOnly) list = list.filter((p) => p.verified);
@@ -60,7 +105,7 @@ export default function SearchPage() {
         }
 
         return list;
-    }, [query, selectedCategory, selectedAvailability, verifiedOnly, minRating, sortBy]);
+    }, [allProviders, query, locationParam, selectedCategory, selectedAvailability, verifiedOnly, minRating, sortBy]);
 
     const clearFilters = () => {
         setSelectedCategory('');
@@ -68,6 +113,11 @@ export default function SearchPage() {
         setVerifiedOnly(false);
         setMinRating(0);
         setSortBy('match');
+        // also remove category from URL
+        const params = {};
+        if (query) params.q = query;
+        if (locationParam) params.location = locationParam;
+        setSearchParams(params);
     };
 
     const hasActiveFilters = !!(selectedCategory || selectedAvailability || verifiedOnly || minRating > 0);
@@ -191,7 +241,15 @@ export default function SearchPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                 <div>
                     <h2 className="text-lg font-semibold text-slate-800">
-                        {query ? (<>Results for "<span className="text-blue-600">{query}</span>"</>) : 'All Providers'}
+                        {selectedCategory
+                            ? <>{categories.find(c => c.id === selectedCategory)?.name || selectedCategory} <span className="font-normal text-slate-400">providers</span></>
+                            : query ? <>Results for "<span className="text-blue-600">{query}</span>"</> : 'All Providers'
+                        }
+                        {locationParam && locationParam !== 'All Locations' && (
+                            <span className="ml-2 inline-flex items-center gap-1 text-sm font-medium text-slate-500">
+                                <MapPin className="w-3.5 h-3.5 text-blue-500" />{locationParam}
+                            </span>
+                        )}
                     </h2>
                     <p className="text-sm text-slate-500 mt-0.5">{results.length} providers found</p>
                 </div>
@@ -232,7 +290,11 @@ export default function SearchPage() {
                 ))}
             </div>
 
-            {results.length > 0 ? (
+            {loading ? (
+                <div className="flex justify-center py-20">
+                    <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            ) : results.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {results.map((p) => (
                         <ProviderCard key={p.id} provider={p} />

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { authApi } from "../../lib/api";
+import { authApi } from "../../services/api";
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -43,18 +43,19 @@ function LoginPage() {
         try {
             const result = await authApi.login({ email, password });
 
-            if (!result?.data?.token || !result?.data?.user) {
+            if (!result?.user) {
                 throw new Error("Invalid response received from the server.");
             }
 
-            authApi.saveSession(result);
-            setUser(result.data.user);
+            setUser(result.user);
 
-            const role = String(result.data.user.role || "").toLowerCase();
+            const role = String(result.user.role || "").toLowerCase();
             const requestedPath = location.state?.from;
 
             if (requestedPath) {
                 navigate(requestedPath, { replace: true });
+            } else if (role === "admin") {
+                navigate("/admin", { replace: true });
             } else if (role === "provider") {
                 navigate("/provider", { replace: true });
             } else {

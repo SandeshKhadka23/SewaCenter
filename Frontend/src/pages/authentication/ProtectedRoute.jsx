@@ -30,6 +30,9 @@ export default function ProtectedRoute({ children, roles = [] }) {
         normalizedRoles.length > 0 &&
         !normalizedRoles.includes(userRole)
     ) {
+        // Redirect to the user's own dashboard instead of home
+        if (userRole === "provider") return <Navigate to="/provider" replace />;
+        if (userRole === "admin") return <Navigate to="/admin" replace />;
         return <Navigate to="/" replace />;
     }
 

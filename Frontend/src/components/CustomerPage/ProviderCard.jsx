@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { MapPin, BadgeCheck, Clock } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import StarRating from './StarRating';
 
 const availabilityConfig = {
@@ -9,23 +10,41 @@ const availabilityConfig = {
 };
 
 export default function ProviderCard({ provider }) {
+    const { user } = useAuth();
+    const userRole = String(user?.role || '').toLowerCase();
+    const canViewProfile = userRole === 'provider' || userRole === 'admin';
+
     const avail = availabilityConfig[provider.availability] || availabilityConfig.offline;
 
     return (
         <div className="group overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm shadow-slate-200/70 transition-all duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl">
-            <Link to={`/providers/${provider.id}`}>
+            {canViewProfile ? (
+                <Link to={`/providers/${provider.id}`}>
+                    <div className="relative h-36 overflow-hidden bg-slate-100">
+                        <img
+                            src={provider.coverImage}
+                            alt={provider.category}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+                        <span className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium ${avail.cls}`}>
+                            {avail.label}
+                        </span>
+                    </div>
+                </Link>
+            ) : (
                 <div className="relative h-36 overflow-hidden bg-slate-100">
                     <img
                         src={provider.coverImage}
                         alt={provider.category}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="h-full w-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
                     <span className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium ${avail.cls}`}>
                         {avail.label}
                     </span>
                 </div>
-            </Link>
+            )}
 
             <div className="p-4">
                 <div className="flex items-start gap-3">
@@ -36,12 +55,16 @@ export default function ProviderCard({ provider }) {
                     />
                     <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                            <Link
-                                to={`/providers/${provider.id}`}
-                                className="truncate text-sm font-semibold text-slate-800 transition-colors hover:text-blue-600"
-                            >
-                                {provider.name}
-                            </Link>
+                            {canViewProfile ? (
+                                <Link
+                                    to={`/providers/${provider.id}`}
+                                    className="truncate text-sm font-semibold text-slate-800 transition-colors hover:text-blue-600"
+                                >
+                                    {provider.name}
+                                </Link>
+                            ) : (
+                                <div className="truncate text-sm font-semibold text-slate-800">{provider.name}</div>
+                            )}
                             {provider.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-blue-500" />}
                         </div>
                         <p className="text-xs font-medium text-blue-600">{provider.category}</p>
@@ -66,12 +89,21 @@ export default function ProviderCard({ provider }) {
                         <span className="text-lg font-bold text-slate-800">Rs. {provider.price.toLocaleString()}</span>
                         <span className="ml-1 text-xs text-slate-400">{provider.priceUnit}</span>
                     </div>
-                    <Link
-                        to={`/providers/${provider.id}`}
-                        className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
-                    >
-                        View Profile
-                    </Link>
+                    {canViewProfile ? (
+                        <Link
+                            to={`/providers/${provider.id}`}
+                            className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+                        >
+                            View Profile
+                        </Link>
+                    ) : (
+                        <Link
+                            to={`/book/${provider.id}`}
+                            className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+                        >
+                            Book
+                        </Link>
+                    )}
                 </div>
             </div>
         </div>

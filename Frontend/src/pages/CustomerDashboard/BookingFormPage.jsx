@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
     Calendar, Clock, MapPin, ChevronRight, Home as HomeIcon,
-    CheckCircle, AlertCircle, Info, FileText
+    CheckCircle, AlertCircle, Info, FileText, CreditCard, Banknote, Zap
 } from 'lucide-react';
-import { providers } from '../../data/dummy';
+import { providersApi, bookingsApi, catalogServicesApi, serviceRequestsApi, paymentsApi } from '../../services/api';
+import { useLocation } from 'react-router-dom';
 
 const timeSlots = [
     '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
@@ -25,16 +26,55 @@ const serviceOptions = {
 export default function BookingFormPage() {
     const { providerId } = useParams();
     const navigate = useNavigate();
-    const provider = providers.find((p) => p.id === providerId);
+    const [provider, setProvider] = useState(null);
+    const [catalogService, setCatalogService] = useState(null);
+    const [loadingProvider, setLoadingProvider] = useState(true);
     const [step, setStep] = useState(1);
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const catalogServiceId = searchParams.get('catalogServiceId');
     const [submitted, setSubmitted] = useState(false);
+    const [createdId, setCreatedId] = useState(null);   // id of the created booking / service-request
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
     const today = new Date().toISOString().split('T')[0];
 
     const [form, setForm] = useState({
         service: '', date: '', time: '', address: '',
         landmark: '', notes: '', contactName: '', contactPhone: '',
+        paymentMethod: 'CASH',
     });
     const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [providerData, serviceData] = await Promise.all([
+                    providersApi.getById(providerId),
+                    catalogServiceId ? catalogServicesApi.getById(catalogServiceId) : Promise.resolve(null)
+                ]);
+                setProvider(providerData);
+                setCatalogService(serviceData);
+                
+                if (serviceData) {
+                    setForm(f => ({ ...f, service: serviceData.name }));
+                }
+            } catch (error) {
+                console.error("Failed to load data:", error);
+            } finally {
+                setLoadingProvider(false);
+            }
+        };
+        fetchData();
+    }, [providerId, catalogServiceId]);
+
+    if (loadingProvider) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 py-20 flex justify-center">
+                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
 
     if (!provider) {
         return (
@@ -45,14 +85,21 @@ export default function BookingFormPage() {
         );
     }
 
-    const availableServices = serviceOptions[provider.categoryId] || provider.skills;
+    const availableServices = catalogService ? [catalogService.name] : (serviceOptions[provider.categoryId] || provider.skills);
+    const isInspectionBased = catalogService?.serviceType === 'INSPECTION_BASED';
+    // Effective price: prefer catalogService price fields, fall back to provider.price
+    const effectivePrice = isInspectionBased
+        ? Number(catalogService?.inspectionFee || provider.price || 0)
+        : Number(catalogService?.basePrice || provider.price || 0);
 
     const validateStep = (s) => {
         const errs = {};
         if (s === 1) {
             if (!form.service) errs.service = 'Please select a service';
-            if (!form.date) errs.date = 'Please select a date';
-            if (!form.time) errs.time = 'Please select a time slot';
+            if (!isInspectionBased) {
+                if (!form.date) errs.date = 'Please select a date';
+                if (!form.time) errs.time = 'Please select a time slot';
+            }
         }
         if (s === 2) {
             if (!form.address.trim()) errs.address = 'Please enter your address';
@@ -66,7 +113,60 @@ export default function BookingFormPage() {
     };
 
     const handleNext = () => { if (validateStep(step)) setStep(step + 1); };
-    const handleSubmit = () => setSubmitted(true);
+    
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        setSubmitError('');
+        try {
+            let createdRecordId = null;
+
+            if (isInspectionBased) {
+                const result = await serviceRequestsApi.create({
+                    providerId: provider.id,
+                    catalogServiceId: catalogService.id,
+                    serviceName: form.service,
+                    description: form.notes || form.service,
+                    address: `${form.address}${form.landmark ? `, Near ${form.landmark}` : ''}`,
+                    paymentMethod: form.paymentMethod,
+                });
+                createdRecordId = result?.serviceRequest?.id || result?.id || null;
+                setCreatedId(createdRecordId);
+            } else {
+                const result = await bookingsApi.create({
+                    providerId: provider.id,
+                    catalogServiceId: catalogService?.id,
+                    serviceName: form.service,
+                    scheduledDate: form.date,
+                    timeSlot: form.time,
+                    address: form.address,
+                    landmark: form.landmark,
+                    notes: form.notes,
+                    contactName: form.contactName,
+                    contactPhone: form.contactPhone,
+                    paymentMethod: form.paymentMethod,
+                });
+                createdRecordId = result?.booking?.id || result?.id || null;
+                setCreatedId(createdRecordId);
+            }
+
+            // If Khalti selected, initiate payment immediately
+            if (form.paymentMethod === 'KHALTI' && createdRecordId) {
+                const pay = await paymentsApi.initiate(createdRecordId);
+                if (pay.payment_url) {
+                    window.location.href = pay.payment_url;
+                    return;
+                }
+            }
+            
+            setSubmitted(true);
+        } catch (error) {
+            console.error("Failed to submit booking:", error);
+            setSubmitError(error.message || "Failed to create booking. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const updateForm = (field, value) => {
         setForm((f) => ({ ...f, [field]: value }));
         setErrors((e) => ({ ...e, [field]: undefined }));
@@ -81,19 +181,43 @@ export default function BookingFormPage() {
                 <h2 className="text-2xl font-bold text-slate-800 mb-2">Booking Confirmed!</h2>
                 <p className="text-slate-500 mb-2">Your booking with <span className="font-semibold text-slate-700">{provider.name}</span> has been placed.</p>
                 <p className="text-slate-500 mb-8">
-                    <span className="font-medium text-slate-700">{form.date}</span> at <span className="font-medium text-slate-700">{form.time}</span>
+                    {isInspectionBased 
+                        ? <span className="font-medium text-slate-700">The provider will review your request and schedule an inspection soon.</span>
+                        : <><span className="font-medium text-slate-700">{form.date}</span> at <span className="font-medium text-slate-700">{form.time}</span></>
+                    }
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-sm text-blue-700 text-left mb-8">
                     <p className="font-semibold mb-1 flex items-center gap-1.5"><Info className="w-4 h-4" /> What's next?</p>
                     <ul className="space-y-1 list-disc list-inside text-blue-600">
-                        <li>The provider will confirm your booking shortly.</li>
-                        <li>You'll receive a call from {provider.name}.</li>
-                        <li>Track your booking in My Bookings.</li>
+                        {isInspectionBased ? (
+                            <>
+                                <li>The provider will review your request.</li>
+                                <li>An inspection visit will be scheduled.</li>
+                                <li>Track your request status in My Bookings.</li>
+                            </>
+                        ) : (
+                            <>
+                                <li>The provider will confirm your booking shortly.</li>
+                                <li>You'll receive a call from {provider.name}.</li>
+                                <li>Track your booking in My Bookings.</li>
+                            </>
+                        )}
                     </ul>
                 </div>
                 <div className="flex gap-3 justify-center">
-                    <button onClick={() => navigate('/bookings')} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors">
-                        View Bookings
+                    {createdId && !isInspectionBased && (
+                        <button
+                            onClick={() => navigate(`/bookings/${createdId}`)}
+                            className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors"
+                        >
+                            View Booking Details
+                        </button>
+                    )}
+                    <button
+                        onClick={() => navigate('/bookings')}
+                        className="px-5 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-medium text-sm hover:border-slate-400 transition-colors"
+                    >
+                        {isInspectionBased ? 'View My Requests' : 'All Bookings'}
                     </button>
                     <button onClick={() => navigate('/')} className="px-5 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-medium text-sm hover:border-slate-400 transition-colors">
                         Back to Home
@@ -117,7 +241,7 @@ export default function BookingFormPage() {
             <p className="text-slate-500 mb-8">with <span className="font-semibold text-slate-700">{provider.name}</span></p>
 
             <div className="flex items-center mb-10">
-                {[{ n: 1, label: 'Service & Time' }, { n: 2, label: 'Your Details' }, { n: 3, label: 'Review' }].map(({ n, label }, i) => (
+                {[{ n: 1, label: 'Service & Time' }, { n: 2, label: 'Your Details' }, { n: 3, label: 'Review' }, { n: 4, label: 'Payment' }].map(({ n, label }, i) => (
                     <div key={n} className="flex items-center flex-1">
                         <div className="flex flex-col items-center">
                             <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${step > n ? 'bg-green-500 text-white' : step === n ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'
@@ -126,7 +250,7 @@ export default function BookingFormPage() {
                             </div>
                             <span className="text-xs mt-1 text-slate-500 font-medium whitespace-nowrap hidden sm:block">{label}</span>
                         </div>
-                        {i < 2 && <div className={`flex-1 h-0.5 mx-1 ${step > n + 1 ? 'bg-green-400' : step > n ? 'bg-blue-400' : 'bg-slate-200'}`} />}
+                        {i < 3 && <div className={`flex-1 h-0.5 mx-1 ${step > n + 1 ? 'bg-green-400' : step > n ? 'bg-blue-400' : 'bg-slate-200'}`} />}
                     </div>
                 ))}
             </div>
@@ -139,8 +263,8 @@ export default function BookingFormPage() {
                         <div className="text-sm text-blue-600">{provider.category}</div>
                     </div>
                     <div className="ml-auto text-right">
-                        <div className="font-bold text-slate-800">Rs. {provider.price.toLocaleString()}</div>
-                        <div className="text-xs text-slate-400">{provider.priceUnit}</div>
+                        <div className="font-bold text-slate-800">Rs. {effectivePrice.toLocaleString()}</div>
+                        <div className="text-xs text-slate-400">{isInspectionBased ? 'inspection fee' : (provider.priceUnit || 'per visit')}</div>
                     </div>
                 </div>
 
@@ -160,6 +284,7 @@ export default function BookingFormPage() {
                                 {errors.service && <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.service}</p>}
                             </div>
 
+                            {!isInspectionBased && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -186,6 +311,7 @@ export default function BookingFormPage() {
                                     {errors.time && <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.time}</p>}
                                 </div>
                             </div>
+                            )}
                         </div>
                     )}
 
@@ -243,8 +369,10 @@ export default function BookingFormPage() {
                             <h3 className="font-semibold text-slate-800 mb-3">Review Your Booking</h3>
                             {[
                                 { label: 'Service', value: form.service },
-                                { label: 'Date', value: new Date(form.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) },
-                                { label: 'Time', value: form.time },
+                                ...(!isInspectionBased ? [
+                                    { label: 'Date', value: form.date ? new Date(form.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '' },
+                                    { label: 'Time', value: form.time }
+                                ] : []),
                                 { label: 'Contact', value: form.contactName },
                                 { label: 'Phone', value: form.contactPhone },
                                 { label: 'Address', value: `${form.address}${form.landmark ? ` (Near ${form.landmark})` : ''}` },
@@ -258,11 +386,68 @@ export default function BookingFormPage() {
                             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700 flex gap-2 mt-2">
                                 <Info className="w-4 h-4 shrink-0 mt-0.5" />
                                 <span>
-                                    {provider.priceType === 'inspection'
-                                        ? `Rs. ${provider.price.toLocaleString()} is the inspection/visit fee. Final price depends on the job.`
-                                        : `Fixed price: Rs. ${provider.price.toLocaleString()} ${provider.priceUnit}.`}
+                                    {isInspectionBased
+                                        ? `Rs. ${effectivePrice.toLocaleString()} is the inspection/visit fee. Final price depends on the job.`
+                                        : `Fixed price: Rs. ${effectivePrice.toLocaleString()} ${provider.priceUnit || 'per visit'}.`}
                                 </span>
                             </div>
+                        </div>
+                    )}
+
+                    {step === 4 && (
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-slate-800 mb-1">Choose Payment Method</h3>
+                            <p className="text-sm text-slate-500 mb-4">How would you like to pay for this service?</p>
+
+                            <button
+                                type="button"
+                                onClick={() => updateForm('paymentMethod', 'KHALTI')}
+                                className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                                    form.paymentMethod === 'KHALTI'
+                                        ? 'border-purple-500 bg-purple-50'
+                                        : 'border-slate-200 hover:border-slate-300'
+                                }`}
+                            >
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#5C2D91' }}>
+                                    <Zap className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-slate-800">Pay via Khalti</p>
+                                    <p className="text-xs text-slate-500">Secure online payment — funds held in escrow until job is done</p>
+                                </div>
+                                {form.paymentMethod === 'KHALTI' && <CheckCircle className="w-5 h-5 text-purple-600 shrink-0" />}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => updateForm('paymentMethod', 'CASH')}
+                                className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                                    form.paymentMethod === 'CASH'
+                                        ? 'border-green-500 bg-green-50'
+                                        : 'border-slate-200 hover:border-slate-300'
+                                }`}
+                            >
+                                <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center shrink-0">
+                                    <Banknote className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-slate-800">Cash on Service Completion</p>
+                                    <p className="text-xs text-slate-500">Pay the provider directly after the job is done</p>
+                                </div>
+                                {form.paymentMethod === 'CASH' && <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />}
+                            </button>
+
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700 flex gap-2">
+                                <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                                <span>Total: <strong>Rs. {effectivePrice.toLocaleString()}</strong> {provider.priceUnit || 'per visit'}. {form.paymentMethod === 'KHALTI' ? 'You will be redirected to Khalti after confirming.' : 'Pay cash directly to the provider after service.'}</span>
+                            </div>
+
+                            {submitError && (
+                                <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm flex items-start gap-2">
+                                    <AlertCircle className="w-5 h-5 shrink-0" />
+                                    <span>{submitError}</span>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -273,10 +458,26 @@ export default function BookingFormPage() {
                         >
                             {step === 1 ? 'Cancel' : 'Back'}
                         </button>
-                        <button type="button" onClick={step === 3 ? handleSubmit : handleNext}
-                            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+                        <button
+                            type="button"
+                            onClick={step === 4 ? handleSubmit : handleNext}
+                            disabled={isSubmitting}
+                            className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 flex items-center gap-2"
+                            style={step === 4 ? {
+                                background: form.paymentMethod === 'KHALTI'
+                                    ? 'linear-gradient(135deg,#5C2D91,#7C3AED)'
+                                    : '#16a34a',
+                                color: '#fff',
+                                boxShadow: form.paymentMethod === 'KHALTI' ? '0 4px 15px rgba(124,58,237,0.35)' : '0 4px 15px rgba(22,163,74,0.3)'
+                            } : { background: '#2563eb', color: '#fff' }}
                         >
-                            {step === 3 ? 'Confirm Booking' : 'Next'}
+                            {isSubmitting ? (
+                                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</>
+                            ) : step === 4 ? (
+                                form.paymentMethod === 'KHALTI'
+                                    ? <><Zap className="w-4 h-4" /> Confirm & Pay via Khalti</>
+                                    : <><CheckCircle className="w-4 h-4" /> Confirm Booking (Cash)</>
+                            ) : 'Next'}
                         </button>
                     </div>
                 </div>

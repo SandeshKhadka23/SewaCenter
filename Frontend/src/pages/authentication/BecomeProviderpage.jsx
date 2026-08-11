@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { providerApi } from '../../lib/api';
 import {
     User, Mail, Phone, MapPin, FileText, Upload, CheckCircle,
     ChevronRight, ChevronLeft, Send, Award, Briefcase, Star, AlertCircle
 } from 'lucide-react';
-import { categories } from '../../data/dummy';
+import { categories } from '../../data/categories';
+import { providersApi } from '../../services/api';
 
 const steps = [
     { label: 'Personal Info', icon: User },
@@ -21,15 +21,17 @@ export default function BecomeProviderPage() {
     const [error, setError] = useState('');
 
     const [form, setForm] = useState({
-        name: '',
-        email: '',
+        // name: '',
+        // email: '',
         phone: '',
         location: '',
-        category: '',
+        categoryId: '',
         skills: '',
         experience: '',
         bio: '',
         profileImageUrl: '',
+        skillCertificateUrl: '',
+        experienceCertUrl: '',
         agreeToTerms: false,
     });
 
@@ -37,13 +39,13 @@ export default function BecomeProviderPage() {
 
     const validateStep = (s) => {
         if (s === 0) {
-            if (!form.name.trim()) return 'Name is required';
-            if (!form.email.trim()) return 'Email is required';
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Invalid email format';
+            // if (!form.name.trim()) return 'Name is required';
+            // if (!form.email.trim()) return 'Email is required';
+            // if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Invalid email format';
             if (!form.phone.trim()) return 'Phone number is required';
         }
         if (s === 1) {
-            if (!form.category) return 'Please select a service category';
+            if (!form.categoryId) return 'Please select a service category';
             if (!form.skills.trim()) return 'Please list your skills';
         }
         if (s === 2) {
@@ -76,22 +78,32 @@ export default function BecomeProviderPage() {
         setError('');
 
         try {
-            await providerApi.apply({
-                name: form.name.trim(),
-                email: form.email.trim(),
-                phone: form.phone.trim(),
-                location: form.location.trim(),
-                category: form.category,
+            console.log({
+                phone: form.phone,
+                location: form.location,
+                categoryId: form.categoryId,
                 skills: form.skills,
                 experience: form.experience,
                 bio: form.bio,
                 profileImageUrl: form.profileImageUrl,
+                skillCertificateUrl: form.skillCertificateUrl,
+                experienceCertUrl: form.experienceCertUrl,
             });
-
+            await providersApi.apply({
+                phone: form.phone,
+                location: form.location,
+                categoryId: form.categoryId,
+                skills: form.skills,
+                experience: form.experience,
+                bio: form.bio,
+                profileImageUrl: form.profileImageUrl,
+                skillCertificateUrl: form.skillCertificateUrl,
+                experienceCertUrl: form.experienceCertUrl,
+            });
             setSubmitted(true);
         } catch (err) {
             console.error('Submit error:', err);
-            setError('Failed to submit application. Please try again.');
+            setError(err.message || 'Failed to submit application. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -115,11 +127,12 @@ export default function BecomeProviderPage() {
                         </p>
                     </div>
                     <Link
-                        to="/providers"
+                        to="/provider"
                         className="inline-flex items-center gap-2 text-blue-600 font-medium hover:gap-3 transition-all"
                     >
-                        View All Providers <ChevronRight className="w-4 h-4" />
+                        View Your Dashboard <ChevronRight className="w-4 h-4" />
                     </Link>
+                    {/* <span>Your application is under admin's review.Please wait for approval</span> */}
                 </div>
             </div>
         );
@@ -188,7 +201,7 @@ export default function BecomeProviderPage() {
                     {step === 0 && (
                         <div className="space-y-5">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name *</label>
+                                {/* <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name *</label>
                                 <div className="relative">
                                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                     <input
@@ -199,9 +212,9 @@ export default function BecomeProviderPage() {
                                         className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
                                     />
                                 </div>
-                            </div>
+                            </div> */}
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">Email *</label>
                                     <div className="relative">
@@ -214,7 +227,7 @@ export default function BecomeProviderPage() {
                                             className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
                                         />
                                     </div>
-                                </div>
+                                </div> */}
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">Phone *</label>
                                     <div className="relative">
@@ -271,8 +284,8 @@ export default function BecomeProviderPage() {
                                         <button
                                             key={cat.id}
                                             type="button"
-                                            onClick={() => updateForm('category', cat.name)}
-                                            className={`p-4 rounded-xl border-2 text-left transition-all ${form.category === cat.name
+                                            onClick={() => updateForm('categoryId', cat.id)}
+                                            className={`p-4 rounded-xl border-2 text-left transition-all ${form.categoryId === cat.id
                                                 ? 'border-blue-500 bg-blue-50'
                                                 : 'border-slate-200 hover:border-slate-300'
                                                 }`}
@@ -293,6 +306,9 @@ export default function BecomeProviderPage() {
                                     placeholder="e.g., Pipe Repair, Drain Cleaning, Water Heater Installation"
                                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none"
                                 />
+                                <p className="text-xs text-slate-500 mt-2">
+                                    <strong>Note:</strong> Once your profile is approved, you will be able to manage your specific services (both fixed-price and inspection-based) and set custom pricing directly from your Provider Dashboard.
+                                </p>
                             </div>
                         </div>
                     )}
@@ -321,6 +337,36 @@ export default function BecomeProviderPage() {
                                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none"
                                 />
                             </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Skill Certificate URL <span className="text-slate-400 font-normal">(optional)</span></label>
+                                    <div className="relative">
+                                        <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                        <input
+                                            type="url"
+                                            value={form.skillCertificateUrl}
+                                            onChange={(e) => updateForm('skillCertificateUrl', e.target.value)}
+                                            placeholder="https://link-to-certificate.com"
+                                            className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Experience Certificate URL <span className="text-slate-400 font-normal">(optional)</span></label>
+                                    <div className="relative">
+                                        <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                        <input
+                                            type="url"
+                                            value={form.experienceCertUrl}
+                                            onChange={(e) => updateForm('experienceCertUrl', e.target.value)}
+                                            placeholder="https://link-to-certificate.com"
+                                            className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -332,8 +378,8 @@ export default function BecomeProviderPage() {
                                     <User className="w-5 h-5 text-blue-600" /> Personal Information
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div><span className="text-slate-500">Name:</span> <span className="font-medium text-slate-800">{form.name}</span></div>
-                                    <div><span className="text-slate-500">Email:</span> <span className="font-medium text-slate-800">{form.email}</span></div>
+                                    {/* <div><span className="text-slate-500">Name:</span> <span className="font-medium text-slate-800">{form.name}</span></div>
+                                    <div><span className="text-slate-500">Email:</span> <span className="font-medium text-slate-800">{form.email}</span></div> */}
                                     <div><span className="text-slate-500">Phone:</span> <span className="font-medium text-slate-800">{form.phone}</span></div>
                                     <div><span className="text-slate-500">Location:</span> <span className="font-medium text-slate-800">{form.location || 'N/A'}</span></div>
                                 </div>
@@ -344,7 +390,12 @@ export default function BecomeProviderPage() {
                                     <Briefcase className="w-5 h-5 text-blue-600" /> Service Details
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div><span className="text-slate-500">Category:</span> <span className="font-medium text-slate-800">{form.category}</span></div>
+                                    <div>
+                                        <span className="text-slate-500">Category:</span>
+                                        <span className="font-medium text-slate-800">
+                                            {categories.find(c => c.id === form.categoryId)?.name}
+                                        </span>
+                                    </div>
                                     <div><span className="text-slate-500">Experience:</span> <span className="font-medium text-slate-800">{form.experience}</span></div>
                                 </div>
                                 <div className="text-sm">

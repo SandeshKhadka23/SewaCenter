@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Search, Calendar, Clock, MapPin, AlertCircle, CheckCircle, FileText } from 'lucide-react';
-import { providers } from '../../data/dummy';
+import { providersApi, bookingsApi } from '../../services/api';
 
 const timeSlots = [
     '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
@@ -22,8 +22,28 @@ export default function QuickBookModal({ isOpen, onClose, onBookingComplete }) {
     const [step, setStep] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedProvider, setSelectedProvider] = useState(null);
-    const [submitted, setSubmitted] = useState(false);
+    const [allProviders, setAllProviders] = useState([]);
+    const [loadingProviders, setLoadingProviders] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
     const today = new Date().toISOString().split('T')[0];
+
+    useEffect(() => {
+        if (isOpen && allProviders.length === 0) {
+            const loadProviders = async () => {
+                setLoadingProviders(true);
+                try {
+                    const data = await providersApi.getAll();
+                    setAllProviders(data || []);
+                } catch (error) {
+                    console.error("Failed to load providers:", error);
+                } finally {
+                    setLoadingProviders(false);
+                }
+            };
+            loadProviders();
+        }
+    }, [isOpen, allProviders.length]);
 
     const [form, setForm] = useState({
         service: '', date: '', time: '', address: '',
@@ -31,10 +51,10 @@ export default function QuickBookModal({ isOpen, onClose, onBookingComplete }) {
     });
     const [errors, setErrors] = useState({});
 
-    const filteredProviders = providers.filter((p) =>
+    const filteredProviders = allProviders.filter((p) =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.skills.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()))
+        p.skills?.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     const availableServices = selectedProvider
@@ -66,12 +86,32 @@ export default function QuickBookModal({ isOpen, onClose, onBookingComplete }) {
         if (validateStep(step)) setStep(step + 1);
     };
 
-    const handleSubmit = () => {
-        setSubmitted(true);
-        setTimeout(() => {
-            onBookingComplete();
-            handleClose();
-        }, 1500);
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        setSubmitError('');
+        try {
+            await bookingsApi.create({
+                providerId: selectedProvider.id,
+                serviceName: form.service,
+                scheduledDate: form.date,
+                timeSlot: form.time,
+                address: form.address,
+                landmark: form.landmark,
+                notes: form.notes,
+                contactName: form.contactName,
+                contactPhone: form.contactPhone,
+            });
+            setSubmitted(true);
+            setTimeout(() => {
+                onBookingComplete();
+                handleClose();
+            }, 1500);
+        } catch (error) {
+            console.error("Booking submit error:", error);
+            setSubmitError(error.message || "Failed to create booking. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleClose = () => {
@@ -135,29 +175,39 @@ export default function QuickBookModal({ isOpen, onClose, onBookingComplete }) {
                                 <p className="text-red-500 text-sm flex items-center gap-1"><AlertCircle className="w-4 h-4" />{errors.provider}</p>
                             )}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto">
-                                {filteredProviders.map((p) => (
-                                    <button
-                                        key={p.id}
-                                        onClick={() => setSelectedProvider(p)}
-                                        className={`text-left p-4 rounded-xl border-2 transition-all ${selectedProvider?.id === p.id
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-slate-200 hover:border-slate-300 bg-white'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <img src={p.avatar} alt={p.name} className="w-12 h-12 rounded-xl object-cover" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="font-semibold text-slate-800 truncate">{p.name}</div>
-                                                <div className="text-sm text-blue-600">{p.category}</div>
-                                                <div className="text-xs text-slate-400 mt-0.5">{p.location}</div>
+                                {loadingProviders ? (
+                                    <div className="col-span-full flex justify-center py-10">
+                                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                ) : filteredProviders.length > 0 ? (
+                                    filteredProviders.map((p) => (
+                                        <button
+                                            key={p.id}
+                                            onClick={() => setSelectedProvider(p)}
+                                            className={`text-left p-4 rounded-xl border-2 transition-all ${selectedProvider?.id === p.id
+                                                    ? 'border-blue-500 bg-blue-50'
+                                                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <img src={p.avatar} alt={p.name} className="w-12 h-12 rounded-xl object-cover" />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-semibold text-slate-800 truncate">{p.name}</div>
+                                                    <div className="text-sm text-blue-600">{p.category}</div>
+                                                    <div className="text-xs text-slate-400 mt-0.5">{p.location || 'Unknown Location'}</div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="font-bold text-slate-800 text-sm">Rs. {Number(p.price).toLocaleString()}</div>
+                                                    <div className="text-xs text-slate-400">{p.priceUnit}</div>
+                                                </div>
                                             </div>
-                                            <div className="text-right">
-                                                <div className="font-bold text-slate-800 text-sm">Rs. {p.price}</div>
-                                                <div className="text-xs text-slate-400">{p.priceUnit}</div>
-                                            </div>
-                                        </div>
-                                    </button>
-                                ))}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div className="col-span-full text-center py-10 text-slate-500">
+                                        No providers found.
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -262,6 +312,13 @@ export default function QuickBookModal({ isOpen, onClose, onBookingComplete }) {
                                     className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 resize-none"
                                 />
                             </div>
+                            
+                            {submitError && (
+                                <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm flex items-start gap-2">
+                                    <AlertCircle className="w-5 h-5 shrink-0" />
+                                    <span>{submitError}</span>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -277,9 +334,10 @@ export default function QuickBookModal({ isOpen, onClose, onBookingComplete }) {
                     <button
                         type="button"
                         onClick={step === 2 ? handleSubmit : handleNext}
-                        className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md"
+                        disabled={isSubmitting}
+                        className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md disabled:opacity-50"
                     >
-                        {step === 2 ? 'Confirm Booking' : 'Continue'}
+                        {isSubmitting ? 'Submitting...' : step === 2 ? 'Confirm Booking' : 'Continue'}
                     </button>
                 </div>
             </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search,
   CalendarDays,
@@ -9,45 +9,7 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
-
-const bookings = [
-  {
-    id: 1,
-    ticket: "WO-1042",
-    customer: "Ram Sharma",
-    service: "Electrical Repair",
-    date: "Today, 2:00 PM",
-    amount: 2500,
-    status: "Pending",
-  },
-  {
-    id: 2,
-    ticket: "WO-1043",
-    customer: "Sita KC",
-    service: "Home Cleaning",
-    date: "Tomorrow, 10:00 AM",
-    amount: 1800,
-    status: "Confirmed",
-  },
-  {
-    id: 3,
-    ticket: "WO-1039",
-    customer: "Hari Gautam",
-    service: "Plumbing",
-    date: "22 July",
-    amount: 3200,
-    status: "Completed",
-  },
-  {
-    id: 4,
-    ticket: "WO-1037",
-    customer: "Bikash Rai",
-    service: "Painting",
-    date: "24 July",
-    amount: 4500,
-    status: "Cancelled",
-  },
-];
+import { bookingsApi } from "../../services/api";
 
 const STATUS_STYLE = {
   Pending: {
@@ -98,6 +60,67 @@ export default function ManageBookings() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [selected, setSelected] = useState(null);
+  
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchBookings = async () => {
+    setLoading(true);
+    try {
+      const data = await bookingsApi.getProviderBookings();
+      const mapped = data.map(b => {
+        let status = "Pending";
+        if (b.status === "CONFIRMED") status = "Confirmed";
+        if (b.status === "COMPLETED") status = "Completed";
+        if (b.status === "CANCELLED") status = "Cancelled";
+
+        return {
+          id: b.id,
+          ticket: b.bookingNumber,
+          customer: b.customer?.name || b.contactName,
+          service: b.serviceName,
+          date: new Date(b.scheduledDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) + ', ' + b.timeSlot,
+          amount: b.quotedPrice || 0,
+          status: status,
+          paymentMethod: b.paymentMethod || 'Not specified',
+          paymentStatus: b.paymentStatus || 'UNPAID',
+          raw: b
+        };
+      });
+      setBookings(mapped);
+    } catch (error) {
+      console.error("Failed to load provider bookings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const handleUpdateStatus = async (id, newStatus) => {
+    try {
+      await bookingsApi.updateStatus(id, newStatus);
+      fetchBookings(); // refresh list
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      alert("Failed to update booking status.");
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (id, paymentStatus) => {
+    try {
+      await bookingsApi.updatePaymentStatus(id, paymentStatus);
+      if (selected && selected.id === id) {
+        setSelected({ ...selected, paymentStatus });
+      }
+      fetchBookings();
+    } catch (error) {
+      console.error("Failed to update payment status:", error);
+      alert("Failed to update payment status.");
+    }
+  };
 
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking) => {
@@ -274,7 +297,11 @@ export default function ManageBookings() {
             </span>
           </div>
 
-          {filteredBookings.length === 0 ? (
+          {loading ? (
+            <div className="px-6 py-16 text-center flex justify-center">
+              <div className="w-10 h-10 border-4 border-[#3B6E8F] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : filteredBookings.length === 0 ? (
             <div className="px-6 py-16 text-center">
               <ClipboardList
                 size={28}
@@ -365,12 +392,14 @@ export default function ManageBookings() {
                           {booking.status === "Pending" && (
                             <>
                               <button
+                                onClick={() => handleUpdateStatus(booking.id, "CONFIRMED")}
                                 className="px-4 py-2 rounded-lg text-sm font-medium text-white"
                                 style={{ background: "#3E7C59" }}
                               >
                                 Accept
                               </button>
                               <button
+                                onClick={() => handleUpdateStatus(booking.id, "CANCELLED")}
                                 className="px-4 py-2 rounded-lg text-sm font-medium text-white"
                                 style={{ background: "#B24C3C" }}
                               >
@@ -381,6 +410,7 @@ export default function ManageBookings() {
 
                           {booking.status === "Confirmed" && (
                             <button
+                              onClick={() => handleUpdateStatus(booking.id, "COMPLETED")}
                               className="px-4 py-2 rounded-lg text-sm font-medium text-white"
                               style={{ background: "#3B6E8F" }}
                             >
@@ -435,14 +465,45 @@ export default function ManageBookings() {
                 <span style={{ color: "#8A8A78" }}>Amount</span>
                 <span className="font-medium">{formatRs(selected.amount)}</span>
               </div>
-              <div className="flex justify-between">
-                <span style={{ color: "#8A8A78" }}>Status</span>
-                <span
-                  className={`stamp text-xs font-semibold uppercase px-2 py-0.5 rounded border-2 border-dashed ${STATUS_STYLE[selected.status].stamp}`}
-                >
-                  {selected.status}
-                </span>
+              <div className="flex justify-between items-center mt-2">
+                <span style={{ color: "#8A8A78" }}>Payment</span>
+                <div className="text-right">
+                  <div className="font-medium capitalize">
+                    {selected.paymentMethod === 'KHALTI' ? 'Khalti Online' : selected.paymentMethod}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: selected.paymentStatus === 'ESCROW_HELD' || selected.paymentStatus === 'RELEASED' ? '#3E7C59' : '#E8A33D' }}>
+                    {selected.paymentStatus.replace(/_/g, ' ')}
+                  </div>
+                </div>
               </div>
+              <div className="flex justify-between mt-2 pt-2 border-t" style={{ borderColor: "#E7E2D4" }}>
+                <span style={{ color: "#8A8A78" }}>Status</span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`stamp text-xs font-semibold uppercase px-2 py-0.5 rounded border-2 border-dashed ${STATUS_STYLE[selected.status].stamp}`}
+                  >
+                    {selected.status}
+                  </span>
+                  {selected.raw.customerConfirmedAt && (
+                    <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold" title="Customer Confirmed">✓ C.C.</span>
+                  )}
+                </div>
+              </div>
+              {selected.status === 'Completed' && selected.raw.customerConfirmedAt && selected.paymentMethod === 'CASH' && (
+                <div className="flex justify-between items-center mt-3 pt-3 border-t border-dashed" style={{ borderColor: "#E7E2D4" }}>
+                  <span className="font-semibold text-xs" style={{ color: "#20261F" }}>Update Payment</span>
+                  <select
+                    value={selected.paymentStatus}
+                    onChange={(e) => handleUpdatePaymentStatus(selected.id, e.target.value)}
+                    className="text-xs px-2 py-1 rounded border focus:outline-none"
+                    style={{ borderColor: "#E7E2D4", background: "#F6F3EC", color: "#20261F" }}
+                  >
+                    <option value="UNPAID">Unpaid</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="PAID">Paid</option>
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         </div>

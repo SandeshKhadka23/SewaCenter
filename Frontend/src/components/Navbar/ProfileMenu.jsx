@@ -1,27 +1,121 @@
-import { User, ChevronDown } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown, User, ClipboardList, Settings, LogOut, Briefcase, ShieldCheck } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
+
+function getInitials(name) {
+    if (!name) return "U";
+    return name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+}
 
 function ProfileMenu() {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+
+    useEffect(() => {
+        function handleClick(e) {
+            if (ref.current && !ref.current.contains(e.target)) {
+                setOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClick);
+        return () => document.removeEventListener("mousedown", handleClick);
+    }, []);
+
+    const handleLogout = async () => {
+        await logout();
+        setOpen(false);
+        navigate("/login");
+    };
+
+    const role = String(user?.role || "").toLowerCase();
+
+    const menuItems = role === "provider"
+        ? [
+            { label: "Provider Dashboard", icon: Briefcase, to: "/provider/dashboard" },
+            { label: "Manage Bookings", icon: ClipboardList, to: "/provider/bookings" },
+            { label: "Settings", icon: Settings, to: "/provider/settings" },
+          ]
+        : role === "admin"
+        ? [
+            { label: "Admin Dashboard", icon: ShieldCheck, to: "/admin" },
+          ]
+        : [
+            { label: "My Profile", icon: User, to: "/customer/profile" },
+            { label: "My Bookings", icon: ClipboardList, to: "/customer/bookings" },
+            { label: "Settings", icon: Settings, to: "/customer/settings" },
+          ];
 
     return (
-
-        <button className="flex items-center gap-2 cursor-pointer">
-
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-blue-100">
-
-                <img
-                    src="https://i.pravatar.cc/150"
-                    alt="profile"
-                    className="w-full h-full object-cover"
+        <div className="relative" ref={ref}>
+            <button
+                onClick={() => setOpen((v) => !v)}
+                className="flex items-center gap-2 cursor-pointer group"
+            >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm group-hover:shadow-md transition-shadow">
+                    {user?.avatarUrl ? (
+                        <img src={user.avatarUrl} alt="profile" className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                        getInitials(user?.name)
+                    )}
+                </div>
+                <ChevronDown
+                    size={16}
+                    className={`text-slate-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
                 />
+            </button>
 
-            </div>
+            {open && (
+                <div className="absolute right-0 top-14 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    {/* User info header */}
+                    <div className="px-4 py-3 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                                {getInitials(user?.name)}
+                            </div>
+                            <div className="min-w-0">
+                                <p className="font-semibold text-slate-900 text-sm truncate">{user?.name}</p>
+                                <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                            </div>
+                        </div>
+                    </div>
 
-            <ChevronDown size={18} />
+                    {/* Menu items */}
+                    <div className="py-1">
+                        {menuItems.map(({ label, icon: Icon, to }) => (
+                            <Link
+                                key={label}
+                                to={to}
+                                onClick={() => setOpen(false)}
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                            >
+                                <Icon size={16} className="text-slate-400" />
+                                {label}
+                            </Link>
+                        ))}
+                    </div>
 
-        </button>
-
+                    {/* Logout */}
+                    <div className="border-t border-slate-100 pt-1">
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                            <LogOut size={16} />
+                            Log out
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
     );
-
 }
 
 export default ProfileMenu;

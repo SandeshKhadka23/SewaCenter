@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const AuthContext = createContext(null);
-const API_URL = 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
 
     const refreshUser = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/auth/me`, {
+            const res = await fetch(`${API_URL}/auth/me`, {
                 credentials: 'include',
             });
             if (res.ok) {
@@ -30,7 +30,7 @@ export function AuthProvider({ children }) {
     }, []);
 
     const logout = async () => {
-        await fetch(`${API_URL}/api/auth/logout`, {
+        await fetch(`${API_URL}/auth/logout`, {
             method: 'POST',
             credentials: 'include',
         });

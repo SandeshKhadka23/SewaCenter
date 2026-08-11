@@ -1,5 +1,6 @@
 import { Wrench, Phone, Mail, MapPin, Globe, Send, MessageCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import Logo from '../../assets/images/sewacenterlogo.png';
 
 export default function Footer() {
     return (
@@ -7,14 +8,14 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div className="md:col-span-1">
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
-                                <Wrench className="w-5 h-5 text-white" strokeWidth={2.5} />
-                            </div>
-                            <span className="text-xl font-bold text-white">
-                                Service<span className="text-blue-400">Hub</span>
-                            </span>
-                        </div>
+                        {/* Logo */}
+
+                        <img
+                            src={Logo}
+                            alt="logo"
+                            className="h-11 cursor-pointer"
+                            onClick={() => navigate('/')}
+                        />
                         <p className="text-sm text-slate-400 leading-relaxed">
                             Your trusted platform for connecting with verified local service providers across Nepal.
                         </p>
@@ -46,7 +47,7 @@ export default function Footer() {
                                 <Phone className="w-4 h-4 text-blue-400" /> +977 1-4567890
                             </li>
                             <li className="flex items-center gap-2">
-                                <Mail className="w-4 h-4 text-blue-400" /> hello@servicehub.com
+                                <Mail className="w-4 h-4 text-blue-400" /> hello@sewacenter.com
                             </li>
                             <li className="flex items-center gap-2">
                                 <MapPin className="w-4 h-4 text-blue-400" /> Pulchowk, Lalitpur

@@ -1,15 +1,34 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Droplets, Zap, Sparkles, BookOpen, Settings, Hammer,
-    PaintBucket, Car, ChevronRight, Users
+    PaintBucket, Car, ChevronRight
 } from 'lucide-react';
-import { categories } from '../../data/dummy';
+import { categories } from '../../data/categories';
+import { providersApi } from '../../services/api';
 
 const iconMap = {
     Droplets, Zap, Sparkles, BookOpen, Settings, Hammer, PaintBucket, Car,
 };
 
 export default function CategoriesPage() {
+    const [providerCountMap, setProviderCountMap] = useState({});
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        providersApi.getAll()
+            .then((data) => {
+                // data is array of providers; each has categoryId = slug (e.g. 'electrical')
+                const countMap = data.reduce((acc, p) => {
+                    if (p.categoryId) acc[p.categoryId] = (acc[p.categoryId] || 0) + 1;
+                    return acc;
+                }, {});
+                setProviderCountMap(countMap);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, []);
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div className="text-center mb-12">
@@ -22,6 +41,7 @@ export default function CategoriesPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {categories.map((cat) => {
                     const Icon = iconMap[cat.icon] || Settings;
+                    const count = providerCountMap[cat.id] ?? 0;
                     return (
                         <Link
                             key={cat.id}
@@ -48,12 +68,11 @@ export default function CategoriesPage() {
                             <div className="p-4">
                                 <p className="text-sm text-slate-500 leading-relaxed mb-4">{cat.description}</p>
                                 <div className="flex items-center justify-between">
-                                    <span className="flex items-center gap-1.5 text-sm text-slate-600">
-                                        <Users className="w-4 h-4 text-blue-500" />
-                                        <span className="font-semibold text-slate-800">{cat.providerCount}</span> providers
+                                    <span className="text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
+                                        {loading ? '...' : `${count} provider${count !== 1 ? 's' : ''}`}
                                     </span>
                                     <span className="flex items-center gap-1 text-blue-600 text-sm font-medium group-hover:gap-2 transition-all">
-                                        Browse <ChevronRight className="w-4 h-4" />
+                                        <ChevronRight className="w-4 h-4" />
                                     </span>
                                 </div>
                             </div>

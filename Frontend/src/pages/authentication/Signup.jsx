@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { authApi } from "../../lib/api";
+import { authApi } from "../../services/api";
 
 function Signup() {
     const navigate = useNavigate();
@@ -52,14 +52,13 @@ function Signup() {
                 role: form.role,
             });
 
-            if (!result?.data?.token || !result?.data?.user) {
+            if (!result?.user) {
                 throw new Error("Invalid response received from the server.");
             }
 
-            authApi.saveSession(result);
-            setUser(result.data.user);
+            setUser(result.user);
 
-            const role = String(result.data.user.role || "").toLowerCase();
+            const role = String(result.user.role || "").toLowerCase();
 
             if (role === "provider") {
                 navigate("/become-provider", { replace: true });

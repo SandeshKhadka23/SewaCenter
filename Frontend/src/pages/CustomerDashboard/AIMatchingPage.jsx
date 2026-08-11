@@ -22,7 +22,7 @@ import {
   Wrench,
   Zap,
 } from "lucide-react";
-import { providerApi } from "../../lib/api";
+import { aiApi } from "../../services/api";
 
 const CATEGORY_RULES = [
   {
@@ -200,41 +200,7 @@ const SUGGESTIONS = [
   "My washing machine is making a loud noise",
 ];
 
-function normalizeText(value) {
-  return value.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-}
 
-function analyseIssue(issue) {
-  const text = normalizeText(issue);
-
-  const rankedCategories = CATEGORY_RULES.map((category) => {
-    const matches = category.keywords.filter((keyword) => text.includes(keyword));
-    return {
-      ...category,
-      matches,
-      score: matches.reduce((total, keyword) => total + Math.max(1, keyword.split(" ").length), 0),
-    };
-  }).sort((a, b) => b.score - a.score);
-
-  const category = rankedCategories[0]?.score > 0 ? rankedCategories[0] : CATEGORY_RULES[0];
-
-  let urgency = "Low";
-  if (URGENCY_RULES.high.some((keyword) => text.includes(keyword))) urgency = "High";
-  else if (URGENCY_RULES.medium.some((keyword) => text.includes(keyword))) urgency = "Medium";
-
-  const confidence = category.score > 0
-    ? Math.min(98, 68 + category.score * 7)
-    : 55;
-
-  return {
-    category,
-    urgency,
-    confidence,
-    summary: category.score > 0
-      ? category.explanation
-      : "The request was not specific enough, so Plumbing is shown as a starting suggestion. Add more detail for a better match.",
-  };
-}
 
 function parseExperience(value) {
   const match = String(value || "").match(/\d+/);
@@ -266,10 +232,10 @@ function formatPrice(provider) {
 }
 
 function ProviderRow({ provider, rank, onView, onBook }) {
-  const displayName = provider.businessName || provider.name || "Service Provider";
+  const displayName = provider.businessName || provider.user?.name || provider.name || "Service Provider";
   const rating = Number(provider.averageRating || provider.rating || 0);
   const reviews = provider.reviewCount || provider.reviews || 0;
-  const serviceName = provider.services?.[0]?.name || provider.category || "Home service";
+  const serviceName = provider.services?.[0]?.name || provider.category?.name || provider.category || "Home service";
 
   return (
     <article className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg sm:p-5">
@@ -280,7 +246,7 @@ function ProviderRow({ provider, rank, onView, onBook }) {
 
         <div className="flex min-w-0 items-center gap-3">
           <img
-            src={provider.profileImageUrl || provider.avatarUrl || provider.image || "https://ui-avatars.com/api/?background=eff6ff&color=2563eb&name=Service+Provider"}
+            src={provider.profileImageUrl || provider.user?.avatarUrl || provider.avatarUrl || provider.image || `https://ui-avatars.com/api/?background=eff6ff&color=2563eb&name=${encodeURIComponent(displayName)}`}
             alt={displayName}
             className="h-14 w-14 rounded-full border border-slate-200 object-cover"
           />
@@ -359,6 +325,9 @@ export default function AIMatchingPage() {
   const [error, setError] = useState("");
   const [showAll, setShowAll] = useState(false);
 
+  const [messages, setMessages] = useState([]);
+  const [askQuestion, setAskQuestion] = useState("");
+
   const visibleProviders = useMemo(
     () => (showAll ? providers : providers.slice(0, 3)),
     [providers, showAll],
@@ -368,7 +337,7 @@ export default function AIMatchingPage() {
     event?.preventDefault();
 
     const cleanIssue = issue.trim();
-    if (cleanIssue.length < 5) {
+    if (cleanIssue.length < 5 && !askQuestion) {
       setError("Please describe the problem in at least a few words.");
       return;
     }
@@ -376,22 +345,31 @@ export default function AIMatchingPage() {
     setLoading(true);
     setError("");
     setShowAll(false);
+    setAskQuestion("");
 
-    const result = analyseIssue(cleanIssue);
-    setAnalysis(result);
+    const newMessages = [...messages, { role: "user", content: cleanIssue }];
+    setMessages(newMessages);
 
     try {
-      const response = await providerApi.list({
-        category: result.category.slug,
-        available: "true",
-        limit: "12",
-      });
+      const response = await aiApi.match(newMessages);
 
-      const ranked = [...(response.data || [])].sort(
-        (a, b) => providerMatchScore(b) - providerMatchScore(a),
-      );
-
-      setProviders(ranked);
+      if (!response.sufficient) {
+        setAskQuestion(response.message);
+        setMessages([...newMessages, { role: "assistant", content: response.message }]);
+        setIssue("");
+      } else {
+        const catObj = CATEGORY_RULES.find(c => c.slug === response.extracted.categorySlug) || CATEGORY_RULES[0];
+        setAnalysis({
+          category: {
+            name: response.category || response.extracted.categorySlug,
+            icon: catObj.icon
+          },
+          urgency: response.extracted.urgency,
+          confidence: 98,
+          summary: response.extracted.serviceDetails
+        });
+        setProviders(response.providers || []);
+      }
     } catch (requestError) {
       setProviders([]);
       setError(requestError.message || "Could not load matching providers.");
@@ -405,6 +383,8 @@ export default function AIMatchingPage() {
     setAnalysis(null);
     setProviders([]);
     setError("");
+    setMessages([]);
+    setAskQuestion("");
   }
 
   const CategoryIcon = analysis?.category?.icon || BrainCircuit;
@@ -426,11 +406,18 @@ export default function AIMatchingPage() {
         </section>
 
         <form onSubmit={handleMatch} className="mx-auto mt-8 max-w-5xl">
-          <div className="flex items-center gap-3 rounded-2xl border border-blue-200 bg-white p-2 shadow-[0_16px_45px_rgba(37,99,235,0.10)] ring-4 ring-blue-50 transition focus-within:border-blue-400 focus-within:ring-blue-100">
-            <div className="ml-3 hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 sm:flex">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <textarea
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-blue-200 bg-white p-4 shadow-[0_16px_45px_rgba(37,99,235,0.10)] ring-4 ring-blue-50 transition focus-within:border-blue-400 focus-within:ring-blue-100">
+            {askQuestion && (
+              <div className="w-full bg-blue-50 p-3 rounded-xl border border-blue-100 text-blue-800 text-sm mb-2 font-medium flex items-start gap-2">
+                <BrainCircuit className="h-5 w-5 shrink-0 text-blue-600 mt-0.5" />
+                <p>{askQuestion}</p>
+              </div>
+            )}
+            <div className="flex w-full items-center gap-3">
+              <div className="ml-1 hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 sm:flex">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <textarea
               value={issue}
               onChange={(event) => setIssue(event.target.value)}
               onKeyDown={(event) => {
@@ -443,14 +430,15 @@ export default function AIMatchingPage() {
               placeholder="Example: My kitchen tap is leaking badly"
               className="min-h-12 flex-1 resize-none bg-transparent px-2 py-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 sm:text-base"
             />
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-              aria-label="Find matching providers"
-            >
-              {loading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-            </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label="Find matching providers"
+              >
+                {loading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
           <div className="mt-3 flex flex-wrap justify-center gap-2">

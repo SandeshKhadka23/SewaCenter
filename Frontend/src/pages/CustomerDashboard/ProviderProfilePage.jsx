@@ -1,10 +1,10 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
     MapPin, BadgeCheck, Clock, Briefcase, Star, ChevronRight,
     Home as HomeIcon, Phone, MessageSquare, Calendar, Share2, Heart
 } from 'lucide-react';
-import { useState } from 'react';
-import { providers } from "../../data/dummy";
+import { useState, useEffect } from 'react';
+import { providersApi } from '../../services/api';
 import StarRating from "../../components/CustomerPage/StarRating";
 
 const availabilityConfig = {
@@ -16,9 +16,37 @@ const availabilityConfig = {
 export default function ProviderProfilePage() {
     const { providerId } = useParams();
     const navigate = useNavigate();
-    const provider = providers.find((p) => p.id === providerId);
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const catalogServiceId = searchParams.get('catalogServiceId');
+    
+    const [provider, setProvider] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [wishlisted, setWishlisted] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
+
+    useEffect(() => {
+        const fetchProvider = async () => {
+            try {
+                const data = await providersApi.getById(providerId);
+                setProvider(data);
+            } catch (error) {
+                console.error("Failed to load provider:", error);
+                setProvider(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProvider();
+    }, [providerId]);
+
+    if (loading) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 py-20 flex justify-center">
+                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
 
     if (!provider) {
         return (
@@ -32,9 +60,8 @@ export default function ProviderProfilePage() {
     }
 
     const avail = availabilityConfig[provider.availability] || availabilityConfig.offline;
-    const similarProviders = providers
-        .filter((p) => p.categoryId === provider.categoryId && p.id !== provider.id)
-        .slice(0, 3);
+    // We would fetch similar providers from API, but for now we skip them or fetch generic ones
+    const similarProviders = [];
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -51,7 +78,7 @@ export default function ProviderProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
                     <div className="relative h-52 sm:h-64 rounded-2xl overflow-hidden">
-                        <img src={provider.coverImage} alt={provider.category} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-blue-100" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                         <div className="absolute bottom-4 right-4 flex gap-2">
                             <button
@@ -80,7 +107,7 @@ export default function ProviderProfilePage() {
                                 </div>
                                 <p className="text-blue-600 font-medium mt-1">{provider.category}</p>
                                 <div className="mt-2 flex items-center gap-3 text-sm text-slate-500 flex-wrap">
-                                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {provider.location}</span>
+                                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {provider.location || 'Unknown Location'}</span>
                                     <span className="flex items-center gap-1"><Briefcase className="w-3.5 h-3.5" /> {provider.experience} yrs exp</span>
                                     <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Responds {provider.responseTime}</span>
                                 </div>
@@ -114,7 +141,7 @@ export default function ProviderProfilePage() {
                             <div className="bg-white rounded-2xl border border-slate-200 p-5">
                                 <h3 className="font-semibold text-slate-800 mb-3">Skills & Specializations</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {provider.skills.map((skill) => (
+                                    {provider.skills?.map((skill) => (
                                         <span key={skill} className="px-3 py-1.5 bg-slate-100 text-slate-700 text-sm rounded-lg font-medium">{skill}</span>
                                     ))}
                                 </div>
@@ -144,8 +171,8 @@ export default function ProviderProfilePage() {
                                 </div>
                                 <div className="flex-1">
                                     {[5, 4, 3, 2, 1].map((n) => {
-                                        const count = provider.reviews.filter((r) => r.rating === n).length;
-                                        const pct = provider.reviews.length > 0 ? (count / provider.reviews.length) * 100 : 0;
+                                        const count = provider.reviews?.filter((r) => r.rating === n).length || 0;
+                                        const pct = (provider.reviews?.length || 0) > 0 ? (count / provider.reviews.length) * 100 : 0;
                                         return (
                                             <div key={n} className="flex items-center gap-2 mb-1.5">
                                                 <span className="text-xs text-slate-500 w-4 text-right">{n}</span>
@@ -159,7 +186,7 @@ export default function ProviderProfilePage() {
                                     })}
                                 </div>
                             </div>
-                            {provider.reviews.map((review) => (
+                            {provider.reviews?.map((review) => (
                                 <div key={review.id} className="bg-white rounded-2xl border border-slate-200 p-5">
                                     <div className="flex items-start gap-3">
                                         <img src={review.avatar} alt={review.author} className="w-10 h-10 rounded-full object-cover shrink-0" />
@@ -184,7 +211,7 @@ export default function ProviderProfilePage() {
                     <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm sticky top-24">
                         <div className="mb-4">
                             <div className="flex items-baseline gap-1.5">
-                                <span className="text-2xl font-bold text-slate-800">Rs. {provider.price.toLocaleString()}</span>
+                                <span className="text-2xl font-bold text-slate-800">Rs. {Number(provider.price).toLocaleString()}</span>
                                 <span className="text-sm text-slate-400">{provider.priceUnit}</span>
                             </div>
                             {provider.priceType === 'inspection' && (
@@ -203,7 +230,7 @@ export default function ProviderProfilePage() {
                             </div>
                         </div>
                         <button
-                            onClick={() => navigate(`/book/${provider.id}`)}
+                            onClick={() => navigate(`/book/${provider.id}${catalogServiceId ? `?catalogServiceId=${catalogServiceId}` : ''}`)}
                             disabled={provider.availability === 'offline'}
                             className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
@@ -211,12 +238,30 @@ export default function ProviderProfilePage() {
                             {provider.availability === 'offline' ? 'Currently Unavailable' : 'Book Now'}
                         </button>
                         <div className="mt-3 grid grid-cols-2 gap-2">
-                            <button className="flex items-center justify-center gap-2 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-600 hover:border-slate-400 transition-colors">
-                                <Phone className="w-4 h-4" /> Call
-                            </button>
-                            <button className="flex items-center justify-center gap-2 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-600 hover:border-slate-400 transition-colors">
-                                <MessageSquare className="w-4 h-4" /> Message
-                            </button>
+                            {provider.phone ? (
+                                <>
+                                    <a href={`tel:${provider.phone}`} className="flex items-center justify-center gap-2 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
+                                        <Phone className="w-4 h-4 text-slate-500" /> Call
+                                    </a>
+                                    <a 
+                                        href={`https://wa.me/${provider.phone}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-2 py-2.5 border border-[#25D366] text-[#25D366] rounded-xl text-sm font-medium hover:bg-[#25D366] hover:text-white transition-colors"
+                                    >
+                                        <MessageSquare className="w-4 h-4" /> WhatsApp
+                                    </a>
+                                </>
+                            ) : (
+                                <>
+                                    <button disabled className="flex items-center justify-center gap-2 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-400 bg-slate-50 cursor-not-allowed">
+                                        <Phone className="w-4 h-4" /> Call
+                                    </button>
+                                    <button disabled className="flex items-center justify-center gap-2 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-400 bg-slate-50 cursor-not-allowed">
+                                        <MessageSquare className="w-4 h-4" /> Message
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
 

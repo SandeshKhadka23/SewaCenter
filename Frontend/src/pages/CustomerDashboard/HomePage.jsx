@@ -1,7 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, ChevronRight, Star, MapPin, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
-import { categories, providers } from '../../data/dummy';
+import { useState, useEffect } from 'react';
+import { categories } from '../../data/categories';
+import { providersApi } from '../../services/api';
 import ProviderCard from '../../components/CustomerPage/ProviderCard';
 import Hero from '../../components/CustomerPage/Hero';
 import Howitworks from '../../components/CustomerPage/Howitworks';
@@ -18,13 +19,38 @@ const stats = [
 export default function HomePage() {
     const navigate = useNavigate();
     const [query, setQuery] = useState('');
+    const [featured, setFeatured] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [categoryCountMap, setCategoryCountMap] = useState({});
+
+    useEffect(() => {
+        const loadProviders = async () => {
+            try {
+                const data = await providersApi.getAll();
+
+                // Build a live count map: { categoryId -> count }
+                const countMap = data.reduce((acc, p) => {
+                    if (p.categoryId) acc[p.categoryId] = (acc[p.categoryId] || 0) + 1;
+                    return acc;
+                }, {});
+                setCategoryCountMap(countMap);
+
+                // Filter top providers
+                const top = data.filter(p => p.rating >= 4.0 || p.verified).slice(0, 4);
+                setFeatured(top.length > 0 ? top : data.slice(0, 4));
+            } catch (error) {
+                console.error('Failed to load top providers:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadProviders();
+    }, []);
 
     const handleSearch = (e) => {
         e.preventDefault();
         if (query.trim()) navigate(`/search?q=${encodeURIComponent(query.trim())}`);
     };
-
-    const featured = providers.filter((p) => p.rating >= 4.6).slice(0, 4);
 
     return (
         <div>
@@ -65,26 +91,27 @@ export default function HomePage() {
                                 <img src={cat.image} alt={cat.name} className="h-8 w-8 rounded-lg object-cover" />
                             </div>
                             <div className="font-semibold text-slate-800 transition-colors group-hover:text-blue-600">{cat.name}</div>
-                            <div className="mt-0.5 text-xs text-slate-400">{cat.providerCount} providers</div>
+                            <div className="mt-0.5 text-xs text-slate-400">
+                                {loading
+                                    ? <span className="inline-block w-6 h-2 bg-slate-200 rounded animate-pulse" />
+                                    : `${categoryCountMap[cat.id] ?? 0} providers`
+                                }
+                            </div>
                         </Link>
                     ))}
                 </div>
             </section>
 
+            {/* ── How-it-works prompt replacing direct provider access ── */}
             <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-                <div className="mb-8 flex items-center justify-between">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl p-10 flex flex-col sm:flex-row items-center justify-between gap-6 border border-blue-100">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-[-0.02em] text-slate-800 sm:text-3xl">Top Rated Providers</h2>
-                        <p className="mt-1 text-slate-500">Highly rated by our community</p>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">Find the Right Service</h2>
+                        <p className="text-slate-600 max-w-md">Browse by category to see all available services — with fixed prices or inspection-based quotes — then choose your provider.</p>
                     </div>
-                    <Link to="/search" className="flex items-center gap-1 text-blue-600 font-medium text-sm hover:gap-2 transition-all">
-                        See all <ChevronRight className="w-4 h-4" />
+                    <Link to="/categories" className="shrink-0 flex items-center gap-2 bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-md">
+                        Browse All Categories <ChevronRight className="w-5 h-5" />
                     </Link>
-                </div>
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    {featured.map((p) => (
-                        <ProviderCard key={p.id} provider={p} />
-                    ))}
                 </div>
             </section>
             <Howitworks />
