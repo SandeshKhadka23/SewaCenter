@@ -4,14 +4,23 @@ const prisma = require("../lib/prisma");
 
 const SALT_ROUNDS = 10;
 
+// Cookie configuration
 const COOKIE_OPTIONS = {
     httpOnly: true,
-    sameSite: "lax",
+
+    // Required for Vercel frontend → Render backend in production
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+
     secure: process.env.NODE_ENV === "production",
+
     maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 function signToken(user) {
+    if (!process.env.JWT_SECRET) {
+        throw new Error("JWT_SECRET is not configured.");
+    }
+
     return jwt.sign(
         {
             id: user.id,
@@ -25,6 +34,10 @@ function signToken(user) {
     );
 }
 
+// =======================
+// SIGNUP
+// =======================
+
 async function signup(req, res) {
     try {
         let { name, email, password, role } = req.body;
@@ -34,6 +47,9 @@ async function signup(req, res) {
                 error: "Name, email and password are required.",
             });
         }
+
+        name = name.trim();
+        email = email.trim().toLowerCase();
 
         role = role ? role.toUpperCase() : "CUSTOMER";
 
@@ -55,7 +71,10 @@ async function signup(req, res) {
             });
         }
 
-        const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+        const passwordHash = await bcrypt.hash(
+            password,
+            SALT_ROUNDS
+        );
 
         const user = await prisma.user.create({
             data: {
@@ -80,13 +99,21 @@ async function signup(req, res) {
             },
         });
     } catch (error) {
-        console.error("Signup Error:", error);
+        console.error("❌ Signup Error:", error);
 
         return res.status(500).json({
             error: "Internal Server Error",
+            message:
+                process.env.NODE_ENV === "production"
+                    ? "Something went wrong during signup."
+                    : error.message,
         });
     }
 }
+
+// =======================
+// LOGIN
+// =======================
 
 async function login(req, res) {
     try {
@@ -98,9 +125,11 @@ async function login(req, res) {
             });
         }
 
+        const normalizedEmail = email.trim().toLowerCase();
+
         const user = await prisma.user.findUnique({
             where: {
-                email,
+                email: normalizedEmail,
             },
         });
 
@@ -131,7 +160,7 @@ async function login(req, res) {
 
         res.cookie("token", token, COOKIE_OPTIONS);
 
-        return res.json({
+        return res.status(200).json({
             message: "Login successful.",
             user: {
                 id: user.id,
@@ -141,13 +170,21 @@ async function login(req, res) {
             },
         });
     } catch (error) {
-        console.error("Login Error:", error);
+        console.error("❌ Login Error:", error);
 
         return res.status(500).json({
             error: "Internal Server Error",
+            message:
+                process.env.NODE_ENV === "production"
+                    ? "Something went wrong during login."
+                    : error.message,
         });
     }
 }
+
+// =======================
+// CURRENT USER
+// =======================
 
 async function me(req, res) {
     try {
@@ -155,6 +192,7 @@ async function me(req, res) {
             where: {
                 id: req.user.id,
             },
+
             select: {
                 id: true,
                 name: true,
@@ -164,6 +202,7 @@ async function me(req, res) {
                 avatarUrl: true,
                 status: true,
                 createdAt: true,
+
                 providerProfile: {
                     select: {
                         id: true,
@@ -171,11 +210,15 @@ async function me(req, res) {
                         totalEarnings: true,
                         averageRating: true,
                         reviewCount: true,
+
                         category: {
-                            select: { name: true, slug: true }
-                        }
-                    }
-                }
+                            select: {
+                                name: true,
+                                slug: true,
+                            },
+                        },
+                    },
+                },
             },
         });
 
@@ -185,11 +228,11 @@ async function me(req, res) {
             });
         }
 
-        return res.json({
+        return res.status(200).json({
             user,
         });
     } catch (error) {
-        console.error("Me Error:", error);
+        console.error("❌ Me Error:", error);
 
         return res.status(500).json({
             error: "Internal Server Error",
@@ -197,20 +240,37 @@ async function me(req, res) {
     }
 }
 
-function logout(req, res) {
-    res.clearCookie("token");
+// =======================
+// LOGOUT
+// =======================
 
-    return res.json({
+function logout(req, res) {
+    res.clearCookie("token", {
+        httpOnly: true,
+        sameSite:
+            process.env.NODE_ENV === "production"
+                ? "none"
+                : "lax",
+        secure: process.env.NODE_ENV === "production",
+    });
+
+    return res.status(200).json({
         message: "Logged out successfully.",
     });
 }
+
+// =======================
+// UPDATE PROFILE
+// =======================
 
 async function updateProfile(req, res) {
     try {
         const { name, phone, avatarUrl } = req.body;
 
         if (!name || name.trim() === "") {
-            return res.status(400).json({ error: "Name is required." });
+            return res.status(400).json({
+                error: "Name is required.",
+            });
         }
 
         const data = {
@@ -219,13 +279,17 @@ async function updateProfile(req, res) {
         };
 
         // Only update avatarUrl if explicitly provided
-        if (typeof avatarUrl === 'string') {
+        if (typeof avatarUrl === "string") {
             data.avatarUrl = avatarUrl || null;
         }
 
         const updatedUser = await prisma.user.update({
-            where: { id: req.user.id },
+            where: {
+                id: req.user.id,
+            },
+
             data,
+
             select: {
                 id: true,
                 name: true,
@@ -238,10 +302,15 @@ async function updateProfile(req, res) {
             },
         });
 
-        return res.json({ user: updatedUser });
+        return res.status(200).json({
+            user: updatedUser,
+        });
     } catch (error) {
-        console.error("Update Profile Error:", error);
-        return res.status(500).json({ error: "Internal Server Error" });
+        console.error("❌ Update Profile Error:", error);
+
+        return res.status(500).json({
+            error: "Internal Server Error",
+        });
     }
 }
 
