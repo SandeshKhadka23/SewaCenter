@@ -308,6 +308,43 @@ export default function BookingDetailPage() {
                   </p>
                 </div>
               )}
+
+              {/* Release Escrow Button */}
+              {booking.paymentStatus === 'ESCROW_HELD' && !booking.customerConfirmedAt && (
+                <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+                        <CheckCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                        <h3 className="font-bold text-amber-800 text-sm mb-1">Funds in Escrow</h3>
+                        <p className="text-xs text-amber-700 mb-4">
+                            Your payment is securely held. Please confirm when the job is done to release payment to the provider.
+                        </p>
+                        <button
+                            onClick={async () => {
+                                try {
+                                    setUpdatingCompletion(true);
+                                    await paymentsApi.release(bookingId);
+                                    setBooking(prev => ({ 
+                                        ...prev, 
+                                        paymentStatus: 'RELEASED', 
+                                        status: 'COMPLETED', 
+                                        customerConfirmedAt: new Date().toISOString() 
+                                    }));
+                                } catch (err) {
+                                    alert(err.message || "Failed to release payment.");
+                                } finally {
+                                    setUpdatingCompletion(false);
+                                }
+                            }}
+                            disabled={updatingCompletion}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-amber-500 hover:bg-amber-600 rounded-lg font-semibold text-sm text-white transition-all shadow-sm"
+                        >
+                            {updatingCompletion ? <Loader className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                            Confirm Job Completed
+                        </button>
+                    </div>
+                </div>
+              )}
+
             </div>
           </div>
 

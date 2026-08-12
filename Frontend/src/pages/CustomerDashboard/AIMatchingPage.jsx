@@ -526,7 +526,7 @@ export default function AIMatchingPage() {
                       provider={provider}
                       rank={index + 1}
                       onView={(id) => navigate(`/providers/${id}`)}
-                      onBook={(id) => navigate(`/book/${id}`)}
+                      onBook={(id) => navigate(`/book/${id}?customIssue=${encodeURIComponent(analysis.summary)}`)}
                     />
                   ))}
                 </div>

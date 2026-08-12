@@ -33,6 +33,7 @@ export default function BookingFormPage() {
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
     const catalogServiceId = searchParams.get('catalogServiceId');
+    const customIssue = searchParams.get('customIssue');
     const [submitted, setSubmitted] = useState(false);
     const [createdId, setCreatedId] = useState(null);   // id of the created booking / service-request
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +57,9 @@ export default function BookingFormPage() {
                 setProvider(providerData);
                 setCatalogService(serviceData);
                 
-                if (serviceData) {
+                if (customIssue) {
+                    setForm(f => ({ ...f, service: customIssue }));
+                } else if (serviceData) {
                     setForm(f => ({ ...f, service: serviceData.name }));
                 }
             } catch (error) {
@@ -272,15 +275,21 @@ export default function BookingFormPage() {
                     {step === 1 && (
                         <div className="space-y-5">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Select Service <span className="text-red-500">*</span></label>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {availableServices.map((svc) => (
-                                        <button key={svc} type="button" onClick={() => updateForm('service', svc)}
-                                            className={`text-left px-4 py-3 rounded-xl border text-sm transition-colors ${form.service === svc ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                                                }`}
-                                        >{svc}</button>
-                                    ))}
-                                </div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">Service <span className="text-red-500">*</span></label>
+                                {customIssue ? (
+                                    <div className="px-4 py-3 rounded-xl border border-blue-500 bg-blue-50 text-blue-700 font-medium text-sm">
+                                        {customIssue}
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {availableServices.map((svc) => (
+                                            <button key={svc} type="button" onClick={() => updateForm('service', svc)}
+                                                className={`text-left px-4 py-3 rounded-xl border text-sm transition-colors ${form.service === svc ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                                                    }`}
+                                            >{svc}</button>
+                                        ))}
+                                    </div>
+                                )}
                                 {errors.service && <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.service}</p>}
                             </div>
 

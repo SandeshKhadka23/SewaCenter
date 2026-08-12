@@ -230,7 +230,7 @@ export default function ServiceRequestDetailPage() {
             )}
 
             {/* Confirm Completion */}
-            {request.status === 'COMPLETED' && request.paymentStatus === 'ESCROW_HELD' && (
+            {request.paymentStatus === 'ESCROW_HELD' && !request.customerConfirmedAt && (
               <div className="bg-green-50 rounded-2xl border border-green-200 p-6 shadow-sm text-center">
                 <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
                 <h3 className="font-bold text-lg text-slate-800 mb-2">Service Completed?</h3>

@@ -64,8 +64,8 @@ export default function ManageBookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchBookings = async () => {
-    setLoading(true);
+  const fetchBookings = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const data = await bookingsApi.getProviderBookings();
       const mapped = data.map(b => {
@@ -77,8 +77,8 @@ export default function ManageBookings() {
         return {
           id: b.id,
           ticket: b.bookingNumber,
-          customer: b.customer?.name || b.contactName,
-          service: b.serviceName,
+          customer: b.customer?.name || b.contactName || "Unknown",
+          service: b.serviceName || "Service",
           date: new Date(b.scheduledDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) + ', ' + b.timeSlot,
           amount: b.quotedPrice || 0,
           status: status,
@@ -91,46 +91,64 @@ export default function ManageBookings() {
     } catch (error) {
       console.error("Failed to load provider bookings:", error);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBookings();
+    fetchBookings(true);
   }, []);
 
   const handleUpdateStatus = async (id, newStatus) => {
+    // Optimistic UI Update
+    const mappedNewStatus = newStatus === 'CONFIRMED' ? 'Confirmed' : 
+                            newStatus === 'COMPLETED' ? 'Completed' : 
+                            newStatus === 'CANCELLED' ? 'Cancelled' : 'Pending';
+
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: mappedNewStatus } : b));
+    if (selected && selected.id === id) {
+      setSelected(prev => ({ ...prev, status: mappedNewStatus }));
+    }
+
     try {
       await bookingsApi.updateStatus(id, newStatus);
-      fetchBookings(); // refresh list
+      fetchBookings(false); // Refresh silently in background
     } catch (error) {
       console.error("Failed to update status:", error);
       alert("Failed to update booking status.");
+      fetchBookings(false); // Rollback on error
     }
   };
 
   const handleUpdatePaymentStatus = async (id, paymentStatus) => {
+    // Optimistic UI Update
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, paymentStatus } : b));
+    if (selected && selected.id === id) {
+      setSelected(prev => ({ ...prev, paymentStatus }));
+    }
+
     try {
       await bookingsApi.updatePaymentStatus(id, paymentStatus);
-      if (selected && selected.id === id) {
-        setSelected({ ...selected, paymentStatus });
-      }
-      fetchBookings();
+      fetchBookings(false); // Refresh silently in background
     } catch (error) {
       console.error("Failed to update payment status:", error);
       alert("Failed to update payment status.");
+      fetchBookings(false); // Rollback on error
     }
   };
 
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking) => {
+      const customerName = booking.customer || "";
+      const serviceName = booking.service || "";
+      
       const matchSearch =
-        booking.customer.toLowerCase().includes(search.toLowerCase()) ||
-        booking.service.toLowerCase().includes(search.toLowerCase());
+        customerName.toLowerCase().includes(search.toLowerCase()) ||
+        serviceName.toLowerCase().includes(search.toLowerCase());
       const matchFilter = filter === "All" || booking.status === filter;
       return matchSearch && matchFilter;
     });
-  }, [search, filter]);
+  }, [search, filter, bookings]);
 
   const counts = {
     Total: bookings.length,
