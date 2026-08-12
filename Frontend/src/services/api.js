@@ -3,7 +3,7 @@ const API_URL =
   "https://sewacenter.onrender.com/api";
 
 const apiFetch = async (endpoint, options = {}) => {
-  const url = `${ API_URL }${ endpoint } `;
+  const url = `${API_URL}${endpoint}`;
 
   const headers = {
     "Content-Type": "application/json",
@@ -39,10 +39,10 @@ const apiFetch = async (endpoint, options = {}) => {
 export const providersApi = {
   getAll: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
-    return apiFetch(`/ providers${ qs ? `?${qs}` : "" } `);
+    return apiFetch(`/providers${qs ? `?${qs}` : ""}`);
   },
 
-  getById: (id) => apiFetch(`/ providers / ${ id } `),
+  getById: (id) => apiFetch(`/providers/${id}`),
 
   apply: (data) =>
     apiFetch("/providers/apply", {
@@ -62,7 +62,7 @@ export const bookingsApi = {
       body: JSON.stringify(data),
     }),
 
-  getById: (id) => apiFetch(`/ bookings / ${ id } `),
+  getById: (id) => apiFetch(`/bookings/${id}`),
 
   getCustomerBookings: () =>
     apiFetch("/bookings/customer"),
@@ -71,16 +71,16 @@ export const bookingsApi = {
     apiFetch("/bookings/provider"),
 
   updateStatus: (id, status) =>
-    apiFetch(`/ bookings / ${ id }/status`, {
-method: "PATCH",
-  body: JSON.stringify({ status }),
+    apiFetch(`/bookings/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
     }),
 
-cancel: (id, reason) =>
-  apiFetch(`/bookings/${id}/cancel`, {
-    method: "PATCH",
-    body: JSON.stringify({ reason }),
-  }),
+  cancel: (id, reason) =>
+    apiFetch(`/bookings/${id}/cancel`, {
+      method: "PATCH",
+      body: JSON.stringify({ reason }),
+    }),
 
   customerComplete: (id, confirmed) =>
     apiFetch(`/bookings/${id}/customer-complete`, {
@@ -88,11 +88,11 @@ cancel: (id, reason) =>
       body: JSON.stringify({ confirmed }),
     }),
 
-    updatePaymentStatus: (id, paymentStatus) =>
-      apiFetch(`/bookings/${id}/payment-status`, {
-        method: "PATCH",
-        body: JSON.stringify({ paymentStatus }),
-      }),
+  updatePaymentStatus: (id, paymentStatus) =>
+    apiFetch(`/bookings/${id}/payment-status`, {
+      method: "PATCH",
+      body: JSON.stringify({ paymentStatus }),
+    }),
 };
 
 // =======================
@@ -256,6 +256,7 @@ export const transactionsApi = {
 export const catalogServicesApi = {
   getAll: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
+
     return apiFetch(
       `/catalog-services${qs ? `?${qs}` : ""}`
     );
