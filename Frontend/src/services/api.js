@@ -39,10 +39,14 @@ const apiFetch = async (endpoint, options = {}) => {
 export const providersApi = {
   getAll: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
-    return apiFetch(`/providers${qs ? `?${qs}` : ""}`);
+
+    return apiFetch(
+      `/providers${qs ? `?${qs}` : ""}`
+    );
   },
 
-  getById: (id) => apiFetch(`/providers/${id}`),
+  getById: (id) =>
+    apiFetch(`/providers/${id}`),
 
   apply: (data) =>
     apiFetch("/providers/apply", {
@@ -62,7 +66,8 @@ export const bookingsApi = {
       body: JSON.stringify(data),
     }),
 
-  getById: (id) => apiFetch(`/bookings/${id}`),
+  getById: (id) =>
+    apiFetch(`/bookings/${id}`),
 
   getCustomerBookings: () =>
     apiFetch("/bookings/customer"),
